@@ -31,7 +31,7 @@ class AFLWorker(Worker):
 
         l.info("Got testcase (crashing=%s)!", crashing)
         testcase = crscommon.Testcase(text=t)
-        crscommon.api.submit_testcase(self._job.cb_id, self._job.binary_id, testcase, bitmap_id=self.bitmap_id, crashing=True)
+        crscommon.api.submit_testcase(self._job.cb_id, self._job.binary_id, testcase, bitmap_id=self.bitmap_id, crashing=crashing)
         self._seen.add(t)
 
     def _run(self, job):
@@ -54,11 +54,12 @@ class AFLWorker(Worker):
         l.info("Started fuzzer")
 
         while True:
-            self._current_bitmap = None
-            time.sleep(20)
+            time.sleep(5)
             l.debug("Checking results...")
 
-            for c in self._fuzzer.crashes() + self._fuzzer.queue():
+            for c in self._fuzzer.crashes():
+                self._check_testcase(c, True)
+            for c in self._fuzzer.queue():
                 self._check_testcase(c, False)
 
     def run(self, job):
