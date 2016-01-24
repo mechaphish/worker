@@ -44,10 +44,17 @@ class RexWorker(Worker):
 
     def run(self, job):
         try:
-            self._run(job)
-        except (rex.CannotExploit, ValueError):
+            exp = self._run(job)
+        except (rex.CannotExploit, ValueError) as e:
+            l.error(e)
+
             testcase = job.crashing_testcase
             testcase.explorable = False
             testcase.exploitable = False
 
+            l.info("updating testcase as neither exploitable or explorable")
             crscommon.api.update_testcase(testcase)
+
+            exp = None, None
+
+        return exp
