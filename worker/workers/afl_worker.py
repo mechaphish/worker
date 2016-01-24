@@ -31,7 +31,7 @@ class AFLWorker(Worker):
 
         l.info("Got testcase (crashing=%s)!", crashing)
         testcase = crscommon.Testcase(text=t)
-        crscommon.api.submit_testcase(self._job.cb_id, self._job.binary_id, testcase, bitmap_id=self.bitmap_id, crashing=crashing)
+        crscommon.api.submit_testcase(self._job.ct_id, self._job.binary_id, testcase, bitmap_id=self.bitmap_id, crashing=crashing)
         self._seen.add(t)
 
     def _run(self, job):
@@ -42,10 +42,10 @@ class AFLWorker(Worker):
         self._job = job
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        testcases = crscommon.api.get_testcases(job.cb_id)
+        testcases = crscommon.api.get_testcases(job.ct_id)
         self._seen.update(t.text for t in testcases)
 
-        self._fuzzer = fuzzer.Fuzzer(os.path.join('cbs/qualifier_event', job.cb_id, job.binary_id), self._workdir, job.cores, seeds=[t.text for t in testcases])
+        self._fuzzer = fuzzer.Fuzzer(os.path.join('cbs/qualifier_event', job.ct_id, job.binary_id), self._workdir, job.cores, seeds=[t.text for t in testcases])
         l.info("Created fuzzer")
 
         self._fuzzer.start()
