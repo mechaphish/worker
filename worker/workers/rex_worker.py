@@ -1,7 +1,6 @@
 from ..worker import Worker
 import crscommon
 import rex
-import os
 
 import logging
 l = logging.getLogger('crs.worker.workers.rex_worker')
@@ -16,12 +15,8 @@ class RexWorker(Worker):
         Runs rex on the crashing testcase.
         '''
 
-        self._job = job
-
-        # TODO: event should be more flexible
-        binary_path = os.path.join('cbs/qualifier_event', job.ct_id, job.binary_id)
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
-        crash = rex.Crash(binary_path, job.crashing_testcase.text)
+        crash = rex.Crash(job.binary.path, job.crashing_testcase.text)
 
         # maybe we need to do some exploring first
         while not crash.exploitable():
@@ -30,12 +25,11 @@ class RexWorker(Worker):
             l.info("exploring crash in hopes of getting something more valuable")
 
             # simultaneously explore and dump the new input into a file
-            crash.explore('/tmp/new-testcase')
+            crash = crash.explore('/tmp/new-testcase')
 
             # upload the new testcase
-            binary = crscommon.Binary(job.ct_id, job.binary_id)
-            tcase = crscommon.Testcase(text=open('/tmp/new-testcase').read(), binary=binary)
-            crscommon.submit_testcase(job.ct_id, job.binary_id, tcase)
+            tcase = crscommon.api.Testcase(self._job.binary, text=open('/tmp/new-testcase').read())
+            job.binary.add_testcase(tcase)
 
         # see if we can immiediately begin exploring the crash
         exploits = crash.exploit()
@@ -47,21 +41,20 @@ class RexWorker(Worker):
         l.debug("can set %d registers with type-1 exploits", len(exploits.register_setters))
         l.debug("generated %d type-2 exploits", len(exploits.leakers))
         # return (type1 exploit, type2 exploit), none if they don't exist
-        return(exploits.best_type1, exploits.best_type2)
+
+        if exploits.best_type1 is not None:
+            l.info("Adding type 1!")
+            job.binary.add_exploit(exploits.best_type1)
+        if exploits.best_type2 is not None:
+            l.info("Adding type 2!")
+            job.binary.add_exploit(exploits.best_type2)
 
     def run(self, job):
         try:
-            exp = self._run(job)
+            self._run(job)
         except (rex.CannotExploit, ValueError) as e:
             l.error(e)
 
             testcase = job.crashing_testcase
             testcase.explorable = False
             testcase.exploitable = False
-
-            l.info("updating testcase as neither exploitable or explorable")
-            crscommon.api.update_testcase(testcase)
-
-            exp = None, None
-
-        return exp
