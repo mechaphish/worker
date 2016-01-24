@@ -28,7 +28,14 @@ class RexWorker(Worker):
             if not crash.explorable():
                 raise ValueError("crash was explored, but ultimately could not be exploited")
             l.info("exploring crash in hopes of getting something more valuable")
-            crash.explore() # produce a new testcase here as well? crash.explore('new-testcase')
+
+            # simultaneously explore and dump the new input into a file
+            crash.explore('/tmp/new-testcase')
+
+            # upload the new testcase
+            binary = crscommon.Binary(job.ct_id, job.binary_id)
+            tcase = crscommon.Testcase(text=open('/tmp/new-testcase').read(), binary=binary)
+            crscommon.submit_testcase(job.ct_id, job.binary_id, tcase)
 
         # see if we can immiediately begin exploring the crash
         exploits = crash.exploit()
