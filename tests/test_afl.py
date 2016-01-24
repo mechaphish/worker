@@ -3,9 +3,9 @@ import timeout_decorator
 
 def test_ccf3d301():
     aw = worker.AFLWorker()
-    aj = crscommon.jobs.AFLJob('ccf3d301', 'ccf3d301_01')
+    aj = crscommon.jobs.AFLJob(crscommon.Binary('ccf3d301', 'ccf3d301_01'))
 
-    @timeout_decorator.timeout(60)
+    @timeout_decorator.timeout(30)
     def _timeout_run():
         aw.run(aj)
 
