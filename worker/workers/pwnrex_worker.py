@@ -18,7 +18,7 @@ class PwnrexWorker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already
         # supports this
-        pwnrex.Pwnrex(job.binary.path, job.pcaPs)
+        pwnrex.Pwnrex(job.binary.path, job.pcaps)
 
     def run(self, job):
         self._run(job)
