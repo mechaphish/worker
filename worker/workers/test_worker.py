@@ -90,11 +90,11 @@ class TestWorker(Worker):
             for curr_perf_tuple in performance_counters:
                 if (curr_perf_tuple[0] in curr_line) and len(curr_line.split(curr_perf_tuple[1])) > 1:
                     performance_json[curr_perf_tuple[2]] = float(curr_line.split(curr_perf_tuple[1])[1].strip())
-            if "total tests failed" in l:
-                total_failed = int(l.split(":")[1])
-            elif "SIGSEGV" in l or "SIGFPE" in l or "SIGILL" in l:
+            if "total tests failed" in curr_line:
+                total_failed = int(curr_line.split(":")[1])
+            elif "SIGSEGV" in curr_line or "SIGFPE" in curr_line or "SIGILL" in curr_line:
                 final_result = "C"
-            elif "SIGALRM" in l or "not ok - process timed out" in l:
+            elif "SIGALRM" in curr_line or "not ok - process timed out" in curr_line:
                 final_result = "F"
 
         if total_failed > 0:
