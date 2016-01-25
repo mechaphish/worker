@@ -73,6 +73,37 @@ class TestWorker(Worker):
                     self.free_vms = set()
                 self.free_vms.add(to_free_vm)
 
+    @staticmethod
+    def parse_cb_test_out(output_buf):
+        final_result = None
+        performance_json = {"rss": 0.0, "flt": 0.0, "filesize": 0.0,  "cpu_clock": 0.0, "task_clock": 0.0}
+
+        # Performance counters
+        # Format: (key check, split value, json key)
+        performance_counters = {("cb-server: total maxrss", "total maxrss", "rss"),
+                                ("cb-server: total minflt", "total minflt", "flt"),
+                                ("cb-server: total sw-cpu-clock", "sw-cpu-clock", "cpu_clock"),
+                                ("cb-server: total sw-task-clock", "sw-task-clock", "task_clock"),
+                                ("cb-server: stat:", "filesize", "filesize")}
+        total_failed = -1
+        for curr_line in output_buf.split("\n"):
+            for curr_perf_tuple in performance_counters:
+                if (curr_perf_tuple[0] in curr_line) and len(curr_line.split(curr_perf_tuple[1])) > 1:
+                    performance_json[curr_perf_tuple[2]] = float(curr_line.split(curr_perf_tuple[1])[1].strip())
+            if "total tests failed" in l:
+                total_failed = int(l.split(":")[1])
+            elif "SIGSEGV" in l or "SIGFPE" in l or "SIGILL" in l:
+                final_result = "C"
+            elif "SIGALRM" in l or "not ok - process timed out" in l:
+                final_result = "F"
+
+        if total_failed > 0:
+            final_result = "F"
+        elif final_result is not None:
+            final_result = "S"
+
+        return final_result, performance_json
+
     def _run(self, job, test_vm):
         """
 
