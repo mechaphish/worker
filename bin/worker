@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+# FIXME: test code
+from time import sleep
+from os import environ as ENV
+from farnsworth_client import API as ProfAPI
+from farnsworth_client.models import Job
+import worker
+
+prof_url = "http://{}:{}".format(ENV['FARNSWORTH_SERVICE_HOST'], ENV['FARNSWORTH_SERVICE_PORT'])
+job_id = ENV['JOB_ID']
+ProfAPI.init(prof_url)
+
+while True:
+    print "[Worker] Waiting for jobs..."
+    job = Job.find(job_id)
+    if job:
+        print "[Worker] Job #%s" % job_id
+        work = None
+        if job.worker == 'afl':
+            work = worker.AFLWorker()
+        work.run(job)
+        print "[Worker] Done job #%s" % job_id
+        break
+    sleep(3)

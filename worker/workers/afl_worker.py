@@ -14,15 +14,14 @@ class AFLWorker(Worker):
         self._fuzzer = None
         self._bitmap_id = None
         self._last_uploaded_bitmap = None
-        self._binary = None
+        self._cbn = None
 
     def _check_testcase(self, t, crashing):
         if t in self._seen:
             return
-
         l.info("Got testcase (crashing=%s)!", crashing)
-        self._binary.bitmap = self._fuzzer.bitmap()
-        self._binary.add_testcase(crscommon.api.Testcase(self._binary, text=t, crashing=crashing))
+        self._cbn.bitmap = self._fuzzer.bitmap()
+        # self._cbn.tests << Test(cbn_id = self._cbn.id, blob=t, type='crash'))
         self._seen.add(t)
 
     def _run(self, job):
@@ -30,12 +29,12 @@ class AFLWorker(Worker):
         Runs AFL with the specified number of cores.
         '''
 
-        self._binary = job.binary
+        self._cbn = job.cbn
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        self._seen.update(t.text for t in self._binary.ct.testcases)
+        self._seen.update(t.text for t in self._cbn.tests)
 
-        self._fuzzer = fuzzer.Fuzzer(job.binary.path, self._workdir, job.cores, seeds=self._seen)
+        self._fuzzer = fuzzer.Fuzzer(job.cbn.binary_path(), self._workdir, job.limit_cpu, seeds=self._seen)
         l.info("Created fuzzer")
 
         self._fuzzer.start()
