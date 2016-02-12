@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# FIXME: test code
+import os
 from time import sleep
 from os import environ as ENV
 from farnsworth_client import API as ProfAPI
@@ -15,11 +15,14 @@ while True:
     print "[Worker] Waiting for jobs..."
     job = Job.find(job_id)
     if job:
-        print "[Worker] Job #%s" % job_id
+        print "[Worker] Running job #%s" % job_id
         work = None
         if job.worker == 'afl':
             work = worker.AFLWorker()
+
+        job.started()
         work.run(job)
+        job.completed()
         print "[Worker] Done job #%s" % job_id
         break
     sleep(3)

@@ -1,7 +1,7 @@
 # CGC Workers
 
 
-### Launch
+### Usage
 
 ```
 JOB_ID=xxx worker

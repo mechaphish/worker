@@ -1,4 +1,5 @@
 from ..worker import Worker
+from farnsworth_client.models import Bitmap, Test
 import crscommon
 import fuzzer
 import time
@@ -12,16 +13,17 @@ class AFLWorker(Worker):
         self._seen = set()
         self._workdir = '/dev/shm/work'
         self._fuzzer = None
-        self._bitmap_id = None
-        self._last_uploaded_bitmap = None
+        self._job = None
         self._cbn = None
 
-    def _check_testcase(self, t, crashing):
+    def _check_testcase(self, t, test_type):
         if t in self._seen:
             return
-        l.info("Got testcase (crashing=%s)!", crashing)
-        self._cbn.bitmap = self._fuzzer.bitmap()
-        # self._cbn.tests << Test(cbn_id = self._cbn.id, blob=t, type='crash'))
+        l.info("Got testcase (%s)!", test_type)
+        self._job.produced_output = True
+        self._cbn.bitmap = Bitmap(blob=self._fuzzer.bitmap())
+        self._cbn.tests += [Test(job_id=self._job.id, type=test_type, blob=t)]
+        self._cbn.save()
         self._seen.add(t)
 
     def _run(self, job):
@@ -29,14 +31,16 @@ class AFLWorker(Worker):
         Runs AFL with the specified number of cores.
         '''
 
+        self._job = job
         self._cbn = job.cbn
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        self._seen.update(t.text for t in self._cbn.tests)
+        self._seen.update(t.blob for t in self._cbn.tests)
 
-        self._fuzzer = fuzzer.Fuzzer(job.cbn.binary_path(), self._workdir, job.limit_cpu, seeds=self._seen)
+        self._fuzzer = fuzzer.Fuzzer(
+            self._job.cbn.binary_path, self._workdir, self._job.limit_cpu, seeds=self._seen
+        )
         l.info("Created fuzzer")
-
         self._fuzzer.start()
         time.sleep(10)
         assert self._fuzzer.alive
@@ -47,9 +51,9 @@ class AFLWorker(Worker):
             l.debug("Checking results...")
 
             for c in self._fuzzer.crashes():
-                self._check_testcase(c, True)
+                self._check_testcase(c, 'crash')
             for c in self._fuzzer.queue():
-                self._check_testcase(c, False)
+                self._check_testcase(c, 'test')
 
     def run(self, job):
         try:
