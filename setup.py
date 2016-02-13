@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
     name='worker',
@@ -6,11 +6,17 @@ setup(
     packages=[ 'worker', 'worker.workers' ],
     scripts=['bin/worker'],
     install_requires=[
-        'timeout-decorator',
-        'fuzzer',
-        'python-dotenv',
+        'python-dotenv==0.3.0',
         'farnsworth_client',
+        'fuzzer',
+        # test dependencies
+        'timeout-decorator',
+        'mock>=1.3.0',
+        'nose>=1.3.7',
+        'nose-timer>=0.5.0',
+        'coverage>=4.0.3'
     ],
+    test_suite="nose.collector",
     description='Worker component of the Shellphish CRS.',
     url='https://git.seclab.cs.ucsb.edu/cgc/miester',
 )
