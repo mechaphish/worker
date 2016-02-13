@@ -35,7 +35,7 @@ class AFLWorker(Worker):
         self._cbn = job.cbn
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        self._seen.update(t.blob for t in self._cbn.tests)
+        self._seen.update(t.blob for t in self._cbn.tests_by_type('test'))
 
         self._fuzzer = fuzzer.Fuzzer(
             self._job.cbn.binary_path, self._workdir, self._job.limit_cpu, seeds=self._seen
