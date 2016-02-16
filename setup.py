@@ -16,7 +16,6 @@ setup(
         'nose-timer>=0.5.0',
         'coverage>=4.0.3'
     ],
-    test_suite="nose.collector",
     description='Worker component of the Shellphish CRS.',
     url='https://git.seclab.cs.ucsb.edu/cgc/miester',
 )
