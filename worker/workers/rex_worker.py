@@ -1,5 +1,5 @@
 from ..worker import Worker
-import crscommon
+from farnsworth_client.models import Test
 import rex
 
 import logging
@@ -9,14 +9,19 @@ l.setLevel('DEBUG')
 class RexWorker(Worker):
     def __init__(self):
         self._job = None
+        self._cbn = None
 
     def _run(self, job):
         '''
         Runs rex on the crashing testcase.
         '''
 
+        self._job = job
+        self._cbn = job.cbn
+
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
-        crash = rex.Crash(job.binary.path, job.crashing_testcase.text)
+        crashing_test = job.payload
+        crash = rex.Crash(job.cbn.binary_path, crashing_test.blob)
 
         # maybe we need to do some exploring first
         while not crash.exploitable():
@@ -28,8 +33,9 @@ class RexWorker(Worker):
             crash = crash.explore('/tmp/new-testcase')
 
             # upload the new testcase
-            tcase = crscommon.api.Testcase(self._job.binary, text=open('/tmp/new-testcase').read())
-            job.binary.add_testcase(tcase)
+            # FIXME: we probably want to store it in a different table with custom attrs
+            self._cbn.tests += [Test(job_id=self._job.id, type='test', blob=open('/tmp/new-testcase').read())]
+            self._cbn.save()
 
         # see if we can immiediately begin exploring the crash
         exploits = crash.exploit()
@@ -44,17 +50,19 @@ class RexWorker(Worker):
 
         if exploits.best_type1 is not None:
             l.info("Adding type 1!")
-            job.binary.add_exploit(exploits.best_type1)
+            self._cbn.tests += [Test(job_id=self._job.id, type='exploit1', blob=exploits.best_type1)]
+            self._cbn.save()
         if exploits.best_type2 is not None:
             l.info("Adding type 2!")
-            job.binary.add_exploit(exploits.best_type2)
+            self._cbn.tests += [Test(job_id=self._job.id, type='exploit2', blob=exploits.best_type2)]
+            self._cbn.save()
 
     def run(self, job):
         try:
             self._run(job)
         except (rex.CannotExploit, ValueError) as e:
             l.error(e)
-
-            testcase = job.crashing_testcase
-            testcase.explorable = False
-            testcase.exploitable = False
+            # FIXME
+            # testcase = job.crashing_testcase
+            # testcase.explorable = False
+            # testcase.exploitable = False

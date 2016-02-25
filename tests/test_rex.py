@@ -1,18 +1,33 @@
-# import worker, crscommon
+import os
+from mock import MagicMock
+from nose.tools import *
 
-# def test_ccf3d301_exploitation():
-#     rw = worker.RexWorker()
+import worker
+from farnsworth_client.models import Job, ChallengeBinaryNode, Test
 
-#     binary = crscommon.api.Binary('ccf3d301_01', crscommon.api.ChallengeTree('ccf3d301'))
-#     rexploit = crscommon.api.Testcase(binary, text="1\nBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n1\n1\n1\n")
+class TestRexWorker:
+    def setup(self):
+        crashing_test = MagicMock(
+            Test(),
+            type = 'crash',
+            blob = "1\nBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n1\n1\n1\n"
+        )
+        self.cbn = MagicMock(
+            ChallengeBinaryNode(),
+            tests = [],
+            binary_path = os.path.join('../cbs/qualifier_event/ccf3d301', 'ccf3d301_01'),
+        )
+        self.job = MagicMock(
+            Job(),
+            limit_cpu = 1,
+            limit_memory = 2,
+            cbn = self.cbn,
+            payload = crashing_test,
+        )
+        self.rw = worker.RexWorker()
 
-#     rj = crscommon.jobs.RexJob(binary, rexploit)
-
-#     rw.run(rj)
-
-#     # for this binary we can create type-1 exploits, but not type-2s
-#     assert len(binary.exploits) == 1
-#     assert binary.exploits[0].cgc_type == 1
-
-# if __name__ == '__main__':
-#     test_ccf3d301_exploitation()
+    def test_ccf3d301_exploitation(self):
+        self.rw.run(self.job)
+        # for this binary we can create type-1 exploits, but not type-2s
+        assert_equals(len(self.cbn.tests), 1)
+        assert_equals(self.cbn.tests[0].type, 'exploit1')

@@ -9,6 +9,7 @@ setup(
         'python-dotenv==0.3.0',
         'farnsworth_client',
         'fuzzer',
+        'rex',
         # test dependencies
         'timeout-decorator',
         'mock>=1.3.0',
