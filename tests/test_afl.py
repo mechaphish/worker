@@ -1,6 +1,6 @@
 import os
 import timeout_decorator
-import mock
+from mock import MagicMock
 from nose.tools import *
 
 import worker
@@ -8,13 +8,13 @@ from farnsworth_client.models import Job, ChallengeBinaryNode
 
 class TestAFLWorker:
     def setup(self):
-        self.cbn = mock.create_autospec(
-            ChallengeBinaryNode,
+        self.cbn = MagicMock(
+            ChallengeBinaryNode(),
             tests = [],
             binary_path = os.path.join('../cbs/qualifier_event/ccf3d301', 'ccf3d301_01')
         )
-        self.job = mock.create_autospec(
-            Job,
+        self.job = MagicMock(
+            Job(),
             limit_cpu = 4,
             limit_memory = 1,
             cbn = self.cbn
