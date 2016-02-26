@@ -1,0 +1,15 @@
+tests:
+  script:
+    - pip install -r requirements.txt
+    - pip install -e .
+    - mv .env.development .env
+    - nosetests tests
+  tags: [angr]
+
+lint:
+  script: "lint.py"
+  tags: ["cgc-linter"]
+
+docs:
+  script: "generate_docs"
+  tags: ["cgc-linter"]
