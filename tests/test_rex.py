@@ -14,7 +14,7 @@ class TestRexWorker:
         )
         self.cbn = MagicMock(
             ChallengeBinaryNode(),
-            tests = [],
+            exploits = [],
             binary_path = os.path.join('../cbs/qualifier_event/ccf3d301', 'ccf3d301_01'),
         )
         self.job = MagicMock(
@@ -29,5 +29,5 @@ class TestRexWorker:
     def test_ccf3d301_exploitation(self):
         self.rw.run(self.job)
         # for this binary we can create type-1 exploits, but not type-2s
-        assert_equals(len(self.cbn.tests), 1)
-        assert_equals(self.cbn.tests[0].type, 'exploit1')
+        assert_equals(len(self.cbn.exploits), 1)
+        assert_equals(self.cbn.exploits[0].pov_type, 1)
