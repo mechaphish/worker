@@ -50,11 +50,17 @@ class RexWorker(Worker):
 
         if exploits.best_type1 is not None:
             l.info("Adding type 1!")
-            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id, pov_type=1, payload=exploits.best_type1.pov())]
+            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id,
+                                           job_id=self._job.id,
+                                           pov_type='type1',
+                                           payload=exploits.best_type1.pov())]
             self._cbn.save()
         if exploits.best_type2 is not None:
             l.info("Adding type 2!")
-            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id, pov_type=2, payload=exploits.best_type2.pov())]
+            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id,
+                                           job_id=self._job.id,
+                                           pov_type='type2',
+                                           payload=exploits.best_type2.pov())]
             self._cbn.save()
 
     def run(self, job):
