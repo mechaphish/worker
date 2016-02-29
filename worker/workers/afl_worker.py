@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth.models import Bitmap, Test
+from farnsworth.models import Test, Crash, Bitmap
 import fuzzer
 import time
 
@@ -14,16 +14,41 @@ class AFLWorker(Worker):
         self._fuzzer = None
         self._job = None
         self._cbn = None
+        self._runtime = 0
+        self._timeout = None
+        self._last_bm = None
 
-    def _check_testcase(self, t, test_type):
-        if t in self._seen:
+    def _update_bitmap(self):
+        bm = self._fuzzer.bitmap()
+
+        if self._last_bm == bm:
             return
-        l.info("Got testcase (%s)!", test_type)
+        else:
+            self._last_bm = bm
+
+        try:
+            dbm = self._cbn.bitmap.first()
+            dbm.blob = bm
+        except Bitmap.DoesNotExist: #pylint:disable=no-member
+            dbm = Bitmap(blob=bm, cbn=self._cbn)
+        dbm.save()
+
+    def _check_test(self, t):
+        if t in self._seen: return
+
+        l.info("Got test of length (%s)!", len(t))
         self._job.produced_output = True
-        self._cbn.bitmap = Bitmap(blob=self._fuzzer.bitmap())
-        self._cbn.tests += [Test(job_id=self._job.id, type=test_type, blob=t)]
-        self._cbn.save()
-        self._seen.add(t)
+        self._update_bitmap()
+        Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+
+    def _check_crash(self, t):
+        if t in self._seen: return
+
+        l.info("Got crash of length (%s)!", len(t))
+        self._job.produced_output = True
+        self._update_bitmap()
+        #print repr(self._fuzzer.bitmap())
+        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
 
     def _run(self, job):
         '''
@@ -32,27 +57,35 @@ class AFLWorker(Worker):
 
         self._job = job
         self._cbn = job.cbn
+        self._timeout = job.limit_time
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        self._seen.update(t.blob for t in self._cbn.tests_by_type('test'))
+        self._seen.update(t.blob for t in self._cbn.tests)
 
         self._fuzzer = fuzzer.Fuzzer(
-            self._job.cbn.binary_path, self._workdir, self._job.limit_cpu, seeds=self._seen
+            self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen
         )
         l.info("Created fuzzer")
         self._fuzzer.start()
-        time.sleep(10)
-        assert self._fuzzer.alive
+        for _ in range(10):
+            if self._fuzzer.alive:
+                break
+            time.sleep(1)
+        else:
+            raise Exception("Fuzzer failed to start")
+
         l.info("Started fuzzer")
 
-        while True:
+        while self._timeout is None or self._runtime < self._timeout:
             time.sleep(5)
+            self._runtime += 5
             l.debug("Checking results...")
 
             for c in self._fuzzer.crashes():
-                self._check_testcase(c, 'crash')
+                self._check_crash(c)
             for c in self._fuzzer.queue():
-                self._check_testcase(c, 'test')
+                self._check_test(c)
+            self._seen.add(c)
 
     def run(self, job):
         try:
