@@ -1,5 +1,5 @@
 from ..worker import Worker
-import crscommon
+from farnsworth_client.models import Test
 import driller
 
 import logging
@@ -10,14 +10,19 @@ class DrillerWorker(Worker):
     def __init__(self):
         self._seen = set()
         self._driller = None
+        self._job = None
+        self._cbn = None
 
     def run(self, job):
         '''
-        Runs AFL with the specified number of cores.
+        Drills a testcase.
         '''
 
-        self._driller = driller.Driller(job.binary.path, job.testcase.text, job.binary.bitmap, 'tag')
-        testcases = self._driller.drill()
-        for t in testcases:
-            l.info("Got a testcase!")
-            job.binary.add_testcase(crscommon.api.Testcase(job.binary, text=t)) # TODO: what if this crashes?
+        self._job = job
+        self._cbn = job.cbn
+
+        self._driller = driller.Driller(self._cbn.binary_path, job.payload.blob, self._cbn.bitmap.blob, 'tag')
+        for _,t in self._driller.drill_generator():
+            l.info("Found new testcase!")
+            job._cbn.add_test(Test(job_id=self._job.id, blob=t))
+            job._cbn.save()
