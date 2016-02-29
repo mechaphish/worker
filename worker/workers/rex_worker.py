@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth_client.models import Test
+from farnsworth_client.models import Test, Exploit
 import rex
 
 import logging
@@ -50,11 +50,11 @@ class RexWorker(Worker):
 
         if exploits.best_type1 is not None:
             l.info("Adding type 1!")
-            self._cbn.tests += [Test(job_id=self._job.id, type='exploit1', blob=exploits.best_type1)]
+            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id, pov_type=1, payload=exploits.best_type1.pov())]
             self._cbn.save()
         if exploits.best_type2 is not None:
             l.info("Adding type 2!")
-            self._cbn.tests += [Test(job_id=self._job.id, type='exploit2', blob=exploits.best_type2)]
+            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id, pov_type=2, payload=exploits.best_type2.pov())]
             self._cbn.save()
 
     def run(self, job):
