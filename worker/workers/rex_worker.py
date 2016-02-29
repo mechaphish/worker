@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth_client.models import Test, Exploit
+from farnsworth.models import Test, Exploit
 import rex
 
 import logging

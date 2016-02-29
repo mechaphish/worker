@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth_client.models import Bitmap, Test
+from farnsworth.models import Bitmap, Test
 import fuzzer
 import time
 
