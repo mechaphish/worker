@@ -10,6 +10,8 @@ class RexWorker(Worker):
     def __init__(self):
         self._job = None
         self._cbn = None
+        self._exploits = None
+        self._crash = None
 
     def _run(self, job):
         '''
@@ -21,7 +23,8 @@ class RexWorker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.payload
-        crash = rex.Crash(job.cbn.binary_path, crashing_test.blob)
+        crash = rex.Crash(job.cbn.path, str(crashing_test.blob))
+        self._crash = crash
 
         # maybe we need to do some exploring first
         while not crash.exploitable():
@@ -39,6 +42,7 @@ class RexWorker(Worker):
 
         # see if we can immiediately begin exploring the crash
         exploits = crash.exploit()
+        self._exploits = exploits
 
         if exploits.best_type1 is None and exploits.best_type2 is None:
             raise rex.CannotExploit("crash had symptoms of exploitability, but no exploits could be built")
@@ -50,18 +54,11 @@ class RexWorker(Worker):
 
         if exploits.best_type1 is not None:
             l.info("Adding type 1!")
-            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id,
-                                           job_id=self._job.id,
-                                           pov_type='type1',
-                                           payload=exploits.best_type1.pov())]
+            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1', payload=exploits.best_type1.pov())
             self._cbn.save()
         if exploits.best_type2 is not None:
             l.info("Adding type 2!")
-            self._cbn.exploits += [Exploit(cbn_id=self._cbn.id,
-                                           job_id=self._job.id,
-                                           pov_type='type2',
-                                           payload=exploits.best_type2.pov())]
-            self._cbn.save()
+            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2', payload=exploits.best_type2.pov())
 
     def run(self, job):
         try:

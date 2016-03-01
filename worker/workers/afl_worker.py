@@ -36,6 +36,7 @@ class AFLWorker(Worker):
 
     def _check_test(self, t):
         if t in self._seen: return
+        self._seen.add(t)
 
         l.info("Got test of length (%s)!", len(t))
         self._job.produced_output = True
@@ -45,6 +46,7 @@ class AFLWorker(Worker):
 
     def _check_crash(self, t):
         if t in self._seen: return
+        self._seen.add(t)
 
         l.info("Got crash of length (%s)!", len(t))
         self._job.produced_output = True
@@ -55,7 +57,8 @@ class AFLWorker(Worker):
     def _sync_new_tests(self):
         new_tests = list(self._cbn.tests.filter(Test.id > self._max_test_id)) #pylint:disable=no-member
         if len(new_tests) > 0:
-            blobs = [ t.blob for t in new_tests ]
+            blobs = [ str(t.blob) for t in new_tests ]
+            self._max_test_id = max(self._max_test_id, *[t.id for t in new_tests ])
             self._seen.update(blobs)
             self._fuzzer.pollenate(blobs)
         return len(new_tests)
@@ -72,7 +75,7 @@ class AFLWorker(Worker):
         # first, get the seeds we currently have, for the entire CB, not just for this binary
         all_tests = list(self._cbn.tests)
         if len(all_tests) > 0:
-            self._seen.update(t.blob for t in all_tests)
+            self._seen.update(str(t.blob) for t in all_tests)
             self._max_test_id = max(t.id for t in all_tests)
 
         self._fuzzer = fuzzer.Fuzzer(
@@ -98,7 +101,6 @@ class AFLWorker(Worker):
                 self._check_crash(c)
             for c in self._fuzzer.queue():
                 self._check_test(c)
-            self._seen.add(c)
 
             l.debug("Syncing new testcases...")
             n = self._sync_new_tests()

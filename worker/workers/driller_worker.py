@@ -12,6 +12,7 @@ class DrillerWorker(Worker):
         self._driller = None
         self._job = None
         self._cbn = None
+        self._seen = set()
 
     def run(self, job):
         '''
@@ -25,5 +26,9 @@ class DrillerWorker(Worker):
 
         self._driller = driller.Driller(self._cbn.path, job.input_test.blob, self._cbn.bitmap.first().blob, 'tag')
         for _,t in self._driller.drill_generator():
+            if t in self._seen:
+                continue
+            self._seen.add(t)
+
             l.info("Found new testcase (of length %s)!", len(t))
             Test.create(cbn=self._cbn, job=self._job, blob=t)
