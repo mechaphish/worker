@@ -17,6 +17,7 @@ class AFLWorker(Worker):
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
+        self._max_test_id = 0
 
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
@@ -26,10 +27,10 @@ class AFLWorker(Worker):
         else:
             self._last_bm = bm
 
-        try:
-            dbm = self._cbn.bitmap.first()
+        dbm = self._cbn.bitmap.first()
+        if dbm is not None:
             dbm.blob = bm
-        except Bitmap.DoesNotExist: #pylint:disable=no-member
+        else: #except Bitmap.DoesNotExist: #pylint:disable=no-member
             dbm = Bitmap(blob=bm, cbn=self._cbn)
         dbm.save()
 
@@ -39,7 +40,8 @@ class AFLWorker(Worker):
         l.info("Got test of length (%s)!", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+        t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+        self._max_test_id = max(self._max_test_id, t.id) #pylint:disable=no-member
 
     def _check_crash(self, t):
         if t in self._seen: return
@@ -49,6 +51,14 @@ class AFLWorker(Worker):
         self._update_bitmap()
         #print repr(self._fuzzer.bitmap())
         Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+
+    def _sync_new_tests(self):
+        new_tests = list(self._cbn.tests.filter(Test.id > self._max_test_id)) #pylint:disable=no-member
+        if len(new_tests) > 0:
+            blobs = [ t.blob for t in new_tests ]
+            self._seen.update(blobs)
+            self._fuzzer.pollenate(blobs)
+        return len(new_tests)
 
     def _run(self, job):
         '''
@@ -60,7 +70,10 @@ class AFLWorker(Worker):
         self._timeout = job.limit_time
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
-        self._seen.update(t.blob for t in self._cbn.tests)
+        all_tests = list(self._cbn.tests)
+        if len(all_tests) > 0:
+            self._seen.update(t.blob for t in all_tests)
+            self._max_test_id = max(t.id for t in all_tests)
 
         self._fuzzer = fuzzer.Fuzzer(
             self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen
@@ -86,6 +99,10 @@ class AFLWorker(Worker):
             for c in self._fuzzer.queue():
                 self._check_test(c)
             self._seen.add(c)
+
+            l.debug("Syncing new testcases...")
+            n = self._sync_new_tests()
+            l.debug("... synced %d new testcases!", n)
 
     def run(self, job):
         try:

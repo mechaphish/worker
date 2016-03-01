@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth_client.models import Test
+from farnsworth.models import Test
 import driller
 
 import logging
@@ -20,9 +20,10 @@ class DrillerWorker(Worker):
 
         self._job = job
         self._cbn = job.cbn
+        self._job.input_test.drilled = True
+        self._job.input_test.save()
 
-        self._driller = driller.Driller(self._cbn.binary_path, job.payload.blob, self._cbn.bitmap.blob, 'tag')
+        self._driller = driller.Driller(self._cbn.path, job.input_test.blob, self._cbn.bitmap.first().blob, 'tag')
         for _,t in self._driller.drill_generator():
-            l.info("Found new testcase!")
-            job._cbn.add_test(Test(job_id=self._job.id, blob=t))
-            job._cbn.save()
+            l.info("Found new testcase (of length %s)!", len(t))
+            Test.create(cbn=self._cbn, job=self._job, blob=t)
