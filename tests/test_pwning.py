@@ -28,7 +28,7 @@ def try_drilling(name, get_crashes):
         cbn.root = cbn
         cbn.save()
 
-    if len(cbn.crashes) > 0 and not get_crashes:
+    if len(cbn.crashes) == 0 or get_crashes:
         # delete the testcases
         Test.delete().where(Test.cbn == cbn).execute()
         Crash.delete().where(Crash.cbn == cbn).execute()
