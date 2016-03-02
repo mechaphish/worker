@@ -3,7 +3,7 @@ import time
 import dotenv
 dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '../../farnsworth/.env'))
 
-from farnsworth.models import ChallengeBinaryNode, AFLJob, DrillerJob, RexJob, Test, Crash
+from farnsworth.models import ChallengeBinaryNode, AFLJob, DrillerJob, RexJob, Test, Crash, Exploit
 import farnsworth
 import worker
 
@@ -27,6 +27,8 @@ def try_drilling(name, get_crashes):
         cbn = ChallengeBinaryNode.create(name=name, parent_id=None, cs_id=name.split('_')[0])
         cbn.root = cbn
         cbn.save()
+
+    Exploit.delete().where(Exploit.cbn == cbn).execute()
 
     if len(cbn.crashes) == 0 or get_crashes:
         # delete the testcases
@@ -76,4 +78,5 @@ def test_pwning():
     try_drilling('00000201_01', True)
 
 if __name__ == '__main__':
-    try_drilling('00000201_01', False)
+    #try_drilling('00000201_01', False)
+    try_drilling('00000201_01', True)
