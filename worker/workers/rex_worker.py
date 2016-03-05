@@ -1,6 +1,7 @@
 from ..worker import Worker
 from farnsworth.models import Test, Exploit
 import rex
+import tracer
 
 import logging
 l = logging.getLogger('crs.worker.workers.rex_worker')
@@ -22,7 +23,7 @@ class RexWorker(Worker):
         self._cbn = job.cbn
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
-        crashing_test = job.payload
+        crashing_test = job.input_crash
         crash = rex.Crash(job.cbn.path, str(crashing_test.blob))
         self._crash = crash
 
@@ -37,8 +38,7 @@ class RexWorker(Worker):
 
             # upload the new testcase
             # FIXME: we probably want to store it in a different table with custom attrs
-            self._cbn.tests += [Test(job_id=self._job.id, type='test', blob=open('/tmp/new-testcase').read())]
-            self._cbn.save()
+            Test.create(cbn=self._cbn, job=self._job, blob=open('/tmp/new-testcase').read())
 
         # see if we can immiediately begin exploring the crash
         exploits = crash.exploit()
@@ -63,9 +63,9 @@ class RexWorker(Worker):
     def run(self, job):
         try:
             self._run(job)
-        except (rex.CannotExploit, ValueError) as e:
+        except (rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
+            job.input_crash.explorable = False
+            job.input_crash.exploitable = False
+            job.input_crash.save()
+            # FIXME: log exception somewhere
             l.error(e)
-            # FIXME
-            # testcase = job.crashing_testcase
-            # testcase.explorable = False
-            # testcase.exploitable = False
