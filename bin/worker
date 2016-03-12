@@ -1,32 +1,7 @@
 #!/usr/bin/env python
 
-import os
-from time import sleep
 from os import environ as ENV
-import worker
-from farnsworth import Job, AFLJob, DrillerJob, RexJob
+import worker.executor
 
 job_id = int(ENV['JOB_ID'])
-
-while True:
-    print "[Worker] Waiting for jobs..."
-    job = Job.find(job_id)
-    if job is not None:
-        print "[Worker] Running job #%s" % job_id
-        work = None
-        if job.worker == 'afl':
-            job = AFLJob.find(job_id) # FIXME
-            work = worker.AFLWorker()
-        elif job.worker == 'rex':
-            job = RexJob.find(job_id) # FIXME
-            work = worker.RexWorker()
-        elif job.worker == 'driller':
-            job = DrillerJob.find(job_id) # FIXME
-            work = worker.DrillerWorker()
-
-        job.started()
-        work.run(job)
-        job.completed()
-        print "[Worker] Done job #%s" % job_id
-        break
-    sleep(3)
+worker.executor.Executor(job_id).run()
