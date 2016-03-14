@@ -41,16 +41,16 @@ class Executor(object):
         self.job.started()
 
         if self.job.limit_time is not None:
-            @timeout_decorator.timeout(self.job.limit_time, use_signals=False)
+            @timeout_decorator.timeout(self.job.limit_time, use_signals=True)
             def _timeout_run():
                 self.work.run(self.job)
             try:
                 _timeout_run()
             except timeout_decorator.TimeoutError:
                 print "[Worker] Job execution timeout!"
-
         else:
             self.work.run(self.job)
-            self.job.completed()
-            self.job.produced_output = True
-            self.job.save()
+
+        self.job.completed()
+        self.job.produced_output = True
+        self.job.save()
