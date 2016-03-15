@@ -17,7 +17,8 @@ class PatcherexWorker(Worker):
         patches = pm.run()
 
         for i,p in enumerate(patches):
-        	ChallengeBinaryNode.create(parent=job.cbn, cs_id=job.cbn.cs_id, name=job.cbn.name+"_patched_"+str(i), blob=p)
-
-
-
+            ChallengeBinaryNode.create(
+                parent=job.cbn,
+                cs_id=job.cbn.cs_id,
+                name=job.cbn.name+"_patched_"+str(i),
+                blob=p)

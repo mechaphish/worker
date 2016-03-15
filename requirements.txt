@@ -2,6 +2,7 @@ timeout-decorator
 python-dotenv==0.3.0
 fuzzer
 rex
+git+ssh://git@git.seclab.cs.ucsb.edu/cgc/patcherex#egg=patcherex
 git+ssh://git@git.seclab.cs.ucsb.edu/cgc/farnsworth#egg=farnsworth
 # test dependencies
 mock>=1.3.0
