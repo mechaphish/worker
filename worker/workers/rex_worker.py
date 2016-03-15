@@ -1,7 +1,7 @@
 from ..worker import Worker
 from farnsworth.models import Test, Exploit
-#import rex
-#import tracer
+import rex
+import tracer
 
 import logging
 l = logging.getLogger('crs.worker.workers.rex_worker')
