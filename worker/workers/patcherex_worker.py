@@ -14,9 +14,10 @@ class PatcherexWorker(Worker):
     def run(self, job):
         input_file = job.cbn.path
         pm = PatchMaster(input_file)
-        output_data = pm.run()
+        patches = pm.run()
 
-        ChallengeBinaryNode.create(parent=job.cbn, cs_id=job.cbn.cs_id, name=job.cbn.name+"_patched", blob=output_data)
+        for i,p in enumerate(patches):
+        	ChallengeBinaryNode.create(parent=job.cbn, cs_id=job.cbn.cs_id, name=job.cbn.name+"_patched_"+str(i), blob=p)
 
 
 
