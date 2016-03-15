@@ -1,6 +1,6 @@
 from ..worker import Worker
 from farnsworth.models import Test, Crash, Bitmap
-import fuzzer
+#import fuzzer
 import time
 
 import logging

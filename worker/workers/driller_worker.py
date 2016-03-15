@@ -1,6 +1,6 @@
 from ..worker import Worker
 from farnsworth.models import Test
-import driller
+#import driller
 
 import logging
 l = logging.getLogger('crs.worker.workers.driller_worker')

@@ -25,6 +25,8 @@ class Executor(object):
                 elif self.job.worker == 'driller':
                     self.job = DrillerJob.find(self.job_id) # FIXME
                     self.work = workers.DrillerWorker()
+                elif self.job.worker == 'patcherex':
+                    self.work = workers.PatcherexWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id

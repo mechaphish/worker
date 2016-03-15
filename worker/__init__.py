@@ -1,2 +1,2 @@
 import settings
-from .workers import *
+#from .workers import *
