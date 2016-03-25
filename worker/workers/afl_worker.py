@@ -79,7 +79,7 @@ class AFLWorker(Worker):
             self._max_test_id = max(t.id for t in all_tests)
 
         self._fuzzer = fuzzer.Fuzzer(
-            self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen
+            self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen, create_dictionary=True
         )
         l.info("Created fuzzer")
         self._fuzzer.start()
