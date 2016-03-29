@@ -24,7 +24,7 @@ class RexWorker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
-        crash = rex.Crash(job.cbn.path, str(crashing_test.blob))
+        crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
         self._crash = crash
 
         # maybe we need to do some exploring first
