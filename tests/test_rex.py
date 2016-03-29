@@ -22,7 +22,7 @@ class TestRexWorker:
             limit_cpu = 1,
             limit_memory = 2,
             cbn = self.cbn,
-            payload = crashing_test,
+            blob = crashing_test,
         )
         self.rw = worker.RexWorker()
 
