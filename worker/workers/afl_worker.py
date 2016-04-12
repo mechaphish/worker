@@ -1,5 +1,6 @@
 from ..worker import Worker
-from farnsworth.models import Test, Crash, Bitmap
+from farnsworth.models import Test, Crash, Bitmap, FuzzerStat
+import datetime
 import fuzzer
 import time
 
@@ -78,12 +79,16 @@ class AFLWorker(Worker):
             self._seen.update(str(t.blob) for t in all_tests)
             self._max_test_id = max(t.id for t in all_tests)
 
+        l.info("Initializing fuzzer stats")
+        fs = FuzzerStat.create(cbn=self._cbn)
+
         self._fuzzer = fuzzer.Fuzzer(
             self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen, create_dictionary=True
         )
+
         l.info("Created fuzzer")
         self._fuzzer.start()
-        for _ in range(10):
+        for _ in range(15):
             if self._fuzzer.alive:
                 break
             time.sleep(1)
@@ -95,6 +100,15 @@ class AFLWorker(Worker):
         while self._timeout is None or self._runtime < self._timeout:
             time.sleep(5)
             self._runtime += 5
+
+            l.debug("Updating fuzzer stats...")
+            fs.pending_favs = int(self._fuzzer.stats['fuzzer-master']['pending_favs'])
+            fs.pending_total = int(self._fuzzer.stats['fuzzer-master']['pending_total'])
+            fs.paths_total = int(self._fuzzer.stats['fuzzer-master']['paths_total'])
+            fs.paths_found = int(self._fuzzer.stats['fuzzer-master']['paths_found'])
+            fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
+            fs.save()
+
             l.debug("Checking results...")
 
             for c in self._fuzzer.crashes():
