@@ -35,3 +35,7 @@ class TestAFLWorker:
         assert_equals(len(self.aw._seen), len(self.job.cbn.tests))
         # we check fuzzer results every 5s, so there could be less results in _seen
         assert_greater_equal(len(cases), len(self.job.cbn.tests))
+
+        # check if fuzzer uploaded the stats
+        pending_favs = int(aw._fuzzer.stats['fuzzer-master']['pending_favs'])
+        assert_equals(pending_favs, aw._cbn.fuzzer_stat.pending_favs)
