@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth.models import Test, Crash, Bitmap, FuzzerStats
+from farnsworth.models import Test, Crash, Bitmap, FuzzerStat
 import datetime
 import fuzzer
 import time
@@ -80,14 +80,15 @@ class AFLWorker(Worker):
             self._max_test_id = max(t.id for t in all_tests)
 
         l.info("Initializing fuzzer stats")
-        FuzzerStats.create(cbn=self._cbn)
+        fs = FuzzerStat.create(cbn=self._cbn)
 
         self._fuzzer = fuzzer.Fuzzer(
             self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen, create_dictionary=True
         )
+
         l.info("Created fuzzer")
         self._fuzzer.start()
-        for _ in range(10):
+        for _ in range(15):
             if self._fuzzer.alive:
                 break
             time.sleep(1)
@@ -101,11 +102,12 @@ class AFLWorker(Worker):
             self._runtime += 5
 
             l.debug("Updating fuzzer stats...")
-            self._cbn.fuzzer_stats.pending_favs = self._fuzzer.stats['pending_favs']
-            self._cbn.fuzzer_stats.pending_total = self._fuzzer.stats['pending_total']
-            self._cbn.fuzzer_stats.paths_total = self._fuzzer.stats['paths_total']
-            self._cbn.fuzzer_stats.paths_found = self._fuzzer.stats['paths_found']
-            self._cbn.fuzzer_stats.last_path = datetime.datetime.fromtimestamp(self._fuzzer.stats['last_path'])
+            fs.pending_favs = int(self._fuzzer.stats['fuzzer-master']['pending_favs'])
+            fs.pending_total = int(self._fuzzer.stats['fuzzer-master']['pending_total'])
+            fs.paths_total = int(self._fuzzer.stats['fuzzer-master']['paths_total'])
+            fs.paths_found = int(self._fuzzer.stats['fuzzer-master']['paths_found'])
+            fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
+            fs.save()
 
             l.debug("Checking results...")
 
