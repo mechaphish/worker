@@ -102,10 +102,10 @@ class AFLWorker(Worker):
             self._runtime += 5
 
             l.debug("Updating fuzzer stats...")
-            fs.pending_favs = int(self._fuzzer.stats['fuzzer-master']['pending_favs'])
-            fs.pending_total = int(self._fuzzer.stats['fuzzer-master']['pending_total'])
-            fs.paths_total = int(self._fuzzer.stats['fuzzer-master']['paths_total'])
-            fs.paths_found = int(self._fuzzer.stats['fuzzer-master']['paths_found'])
+            fs.pending_favs = int(self._fuzzer.stats['fuzzer-1']['pending_favs'])
+            fs.pending_total = int(self._fuzzer.stats['fuzzer-1']['pending_total'])
+            fs.paths_total = int(self._fuzzer.stats['fuzzer-1']['paths_total'])
+            fs.paths_found = int(self._fuzzer.stats['fuzzer-1']['paths_found'])
             fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
             fs.save()
 
