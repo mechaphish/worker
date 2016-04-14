@@ -18,7 +18,7 @@ class AFLWorker(Worker):
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
-        self._max_test_id = 0
+        self._last_sync_time = datetime.datetime.now()
 
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
@@ -43,7 +43,6 @@ class AFLWorker(Worker):
         self._job.produced_output = True
         self._update_bitmap()
         t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
-        self._max_test_id = max(self._max_test_id, t.id) #pylint:disable=no-member
 
     def _check_crash(self, t):
         if t in self._seen: return
@@ -56,10 +55,11 @@ class AFLWorker(Worker):
         Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
 
     def _sync_new_tests(self):
-        new_tests = list(self._cbn.tests.filter(Test.id > self._max_test_id)) #pylint:disable=no-member
+        prev_sync_time = self._last_sync_time
+        self._last_sync_time = datetime.datetime.now()
+        new_tests = list(Test.where(Test.job.worker == 'driller' & Test.created_at > prev_sync_time)) #pylint:disable=no-member
         if len(new_tests) > 0:
             blobs = [ str(t.blob) for t in new_tests ]
-            self._max_test_id = max(self._max_test_id, *[t.id for t in new_tests ])
             self._seen.update(blobs)
             self._fuzzer.pollenate(blobs)
         return len(new_tests)
@@ -77,7 +77,6 @@ class AFLWorker(Worker):
         all_tests = list(self._cbn.tests)
         if len(all_tests) > 0:
             self._seen.update(str(t.blob) for t in all_tests)
-            self._max_test_id = max(t.id for t in all_tests)
 
         l.info("Initializing fuzzer stats")
         fs = FuzzerStat.create(cbn=self._cbn)
