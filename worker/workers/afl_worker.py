@@ -57,7 +57,7 @@ class AFLWorker(Worker):
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
         self._last_sync_time = datetime.datetime.now()
-        new_tests = list(Test.where(Test.job.worker == 'driller' & Test.created_at > prev_sync_time)) #pylint:disable=no-member
+        new_tests = list(Test.unsynced_testcases('driller', prev_sync_time)) #pylint:disable=no-member
         if len(new_tests) > 0:
             blobs = [ str(t.blob) for t in new_tests ]
             self._seen.update(blobs)
