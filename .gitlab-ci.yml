@@ -1,8 +1,11 @@
 tests:
+  services:
+    - postgres:9.5
   script:
+    - angr-test sync hard
     - pip install -e .
-    - mv .env.development .env
-    - nosetests tests
+    - ~/angr/farnsworth/setupdb.sh ~/angr/farnsworth/.env.test
+    - nosetests tests/
   tags: ["angr"]
 
 # lint:

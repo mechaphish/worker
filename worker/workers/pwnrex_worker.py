@@ -1,5 +1,4 @@
 from ..worker import Worker
-import crscommon
 import pwnrex
 
 import logging

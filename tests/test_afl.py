@@ -1,41 +1,43 @@
 import os
-import timeout_decorator
 from mock import MagicMock
 from nose.tools import *
 
+import farnsworth.test_support
+from farnsworth.models import AFLJob, ChallengeBinaryNode
 import worker
-from farnsworth_client.models import Job, ChallengeBinaryNode
+
+if os.environ.get('GITLAB_CI') is not None:
+    cbs_path = "/home/angr/angr/cbs"
+else:
+    cbs_path = os.path.join(os.path.dirname(__file__), '../../cbs')
+
+print cbs_path
 
 class TestAFLWorker:
     def setup(self):
-        self.cbn = MagicMock(
-            ChallengeBinaryNode(),
-            tests = [],
-            binary_path = os.path.join('../cbs/qualifier_event/ccf3d301', 'ccf3d301_01')
+        farnsworth.test_support.truncate_tables()
+        self.cbn = ChallengeBinaryNode.create(
+            blob=open(os.path.join(cbs_path, 'qualifier_event/ccf3d301/ccf3d301_01'),'rb').read(),
+            name='ccf3d301_01',
+            cs_id='ccf3d301'
         )
-        self.job = MagicMock(
-            Job(),
+        self.job = AFLJob.create(
             limit_cpu = 4,
             limit_memory = 1,
+            limit_time = 10,
             cbn = self.cbn
         )
         self.aw = worker.AFLWorker()
 
     def test_it_finds_cases_and_assigns_them_to_cbn_tests(self):
-        @timeout_decorator.timeout(10)
-        def _timeout_run():
-            self.aw.run(self.job)
-        try:
-            _timeout_run()
-        except timeout_decorator.TimeoutError:
-            pass
+        self.aw.run(self.job)
 
         cases = (self.aw._fuzzer.crashes() + self.aw._fuzzer.queue())
-        assert_greater(cases, 0)
-        assert_equals(len(self.aw._seen), len(self.job.cbn.tests))
+        assert_greater(len(cases), 0)
         # we check fuzzer results every 5s, so there could be less results in _seen
+        assert_greater_equal(len(self.aw._seen), len(self.job.cbn.tests))
         assert_greater_equal(len(cases), len(self.job.cbn.tests))
 
         # check if fuzzer uploaded the stats
-        pending_favs = int(aw._fuzzer.stats['fuzzer-master']['pending_favs'])
-        assert_equals(pending_favs, aw._cbn.fuzzer_stat.pending_favs)
+        pending_favs = int(self.aw._fuzzer.stats['fuzzer-master']['pending_favs'])
+        assert_greater_equal(self.aw._cbn.fuzzer_stat.pending_favs, pending_favs)

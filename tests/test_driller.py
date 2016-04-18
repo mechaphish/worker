@@ -1,4 +1,4 @@
-import worker, crscommon
+import worker
 
 def test_ccf3d301_empty_bitmap():
     b = crscommon.api.Binary('ccf3d301_01', crscommon.api.ChallengeTree('ccf3d301'))

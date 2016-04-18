@@ -1,7 +1,5 @@
 from ..worker import Worker
 import threading
-from crscommon.jobs import TesterJob
-import crscommon
 import time
 
 import logging

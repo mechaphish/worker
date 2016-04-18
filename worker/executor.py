@@ -3,7 +3,7 @@ import time
 import timeout_decorator
 
 import workers
-from farnsworth import Job, AFLJob, DrillerJob, RexJob
+from farnsworth.models import Job, AFLJob, DrillerJob, RexJob
 
 class Executor(object):
     def __init__(self, job_id, tries=5):
