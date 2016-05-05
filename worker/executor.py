@@ -3,7 +3,13 @@ import time
 import timeout_decorator
 
 import workers
-from farnsworth.models import Job, AFLJob, DrillerJob, RexJob
+from farnsworth.models import (
+    Job,
+    AFLJob,
+    DrillerJob,
+    RexJob,
+    PatcherexJob,
+)
 
 class Executor(object):
     def __init__(self, job_id, tries=5):
@@ -15,17 +21,15 @@ class Executor(object):
     def run(self):
         while self.tries > 0:
             if self.job is not None:
+                self.job.subclass()
                 print "[Worker] Running job %s" % self.job_id
-                if self.job.worker == 'afl':
-                    self.job = AFLJob.find(self.job_id) # FIXME
+                if isinstance(self.job, AFLJob):
                     self.work = workers.AFLWorker()
-                elif self.job.worker == 'rex':
-                    self.job = RexJob.find(self.job_id) # FIXME
+                elif isinstance(self.job, RexJob):
                     self.work = workers.RexWorker()
-                elif self.job.worker == 'driller':
-                    self.job = DrillerJob.find(self.job_id) # FIXME
+                elif isinstance(self.job, DrillerJob):
                     self.work = workers.DrillerWorker()
-                elif self.job.worker == 'patcherex':
+                elif isinstance(self.job, PatcherexJob):
                     self.work = workers.PatcherexWorker()
 
                 self._timed_execution()
