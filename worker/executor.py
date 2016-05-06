@@ -9,6 +9,7 @@ from farnsworth.models import (
     DrillerJob,
     RexJob,
     PatcherexJob,
+    to_job_type
 )
 
 class Executor(object):
@@ -21,7 +22,7 @@ class Executor(object):
     def run(self):
         while self.tries > 0:
             if self.job is not None:
-                self.job.subclass()
+                self.job = to_job_type(self.job)
                 print "[Worker] Running job %s" % self.job_id
                 if isinstance(self.job, AFLJob):
                     self.work = workers.AFLWorker()
