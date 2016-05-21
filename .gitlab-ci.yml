@@ -15,3 +15,12 @@ tests:
 docs:
   script: "generate_docs"
   tags: ["cgc-linter"]
+
+build_images:
+    only: ["master"]
+    stage: deploy
+    script:
+    # - angr-build angr
+    # - angr-build angr-ci
+    - angr-build worker
+    tags: ["docker-builder"]
