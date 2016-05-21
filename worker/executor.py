@@ -1,6 +1,7 @@
 import os
 import time
 import timeout_decorator
+import sys
 
 import workers
 from farnsworth.models import (
@@ -27,11 +28,11 @@ class Executor(object):
                 if isinstance(self.job, AFLJob):
                     self.work = workers.AFLWorker()
                 elif isinstance(self.job, RexJob):
-                    self.work = workers.RexWorker()
+                    sys.exit(0)
                 elif isinstance(self.job, DrillerJob):
-                    self.work = workers.DrillerWorker()
+                    sys.exit(0)
                 elif isinstance(self.job, PatcherexJob):
-                    self.work = workers.PatcherexWorker()
+                    sys.exit(0)
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
