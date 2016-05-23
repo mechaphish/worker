@@ -20,6 +20,6 @@ class PatcherexWorker(Worker):
             ChallengeBinaryNode.create(
                 parent=job.cbn,
                 root=job.cbn,
-                cs_id=job.cbn.cs_id,
+                cs=job.cbn.cs,
                 name=job.cbn.name+"_patched_"+str(i),
                 blob=p)
