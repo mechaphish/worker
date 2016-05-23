@@ -1,0 +1,3 @@
+block (name:"magic flag page address (ASCII lowercase)"; side:client; match:"4347c";)
+block (name:"magic flag page address (ASCII uppercase)"; side:client; match:"4347C";)
+admit (name:"whenever we see server data, flush the client stream"; side:server; regex:".*"; flush:client;)

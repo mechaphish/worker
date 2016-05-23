@@ -9,6 +9,7 @@ from farnsworth.models import (
     DrillerJob,
     RexJob,
     PatcherexJob,
+    IDSJob,
     to_job_type
 )
 
@@ -32,6 +33,8 @@ class Executor(object):
                     self.work = workers.DrillerWorker()
                 elif isinstance(self.job, PatcherexJob):
                     self.work = workers.PatcherexWorker()
+                elif isinstance(self.job, IDSJob):
+                    self.work = workers.IDSWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id

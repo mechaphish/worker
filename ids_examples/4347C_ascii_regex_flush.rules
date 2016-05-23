@@ -1,0 +1,2 @@
+block (name:"magic flag page address (ASCII regex)"; side:client; regex:"4347[cC]";)
+admit (name:"whenever we see server data, flush the client stream"; side:server; regex:".*"; flush:client;)
