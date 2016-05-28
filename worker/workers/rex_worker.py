@@ -24,6 +24,10 @@ class RexWorker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
+        if crashing_test.triaged:
+            l.error("Rex was passed an already triaged testcase, refusing to exploit it")
+            return
+
         l.info("Rex beginning to triage crash %d for cbn %d", crashing_test.id, self._cbn.id)
 
         crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
