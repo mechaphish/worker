@@ -24,9 +24,14 @@ class RexWorker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
-        l.info("Rex beginning to triage crash for cbn %d", self._cbn.id)
+        l.info("Rex beginning to triage crash %d for cbn %d", crashing_test.id, self._cbn.id)
+
         crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
         self._crash = crash
+
+        # let everyone know this crash has been traced
+        crashing_test.triaged = True
+        crashing_test.save()
 
         if not crash.exploitable() and not crash.explorable():
             raise ValueError("Crash was not exploitable or explorable")
