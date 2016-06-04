@@ -1,1 +1,0 @@
-block (name:"magic flag page address (three bytes, force C0)"; side:client; match:"CG\xC0";)

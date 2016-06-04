@@ -1,7 +1,0 @@
-block (name:"magic flag page address (ASCII lowercase)"; side:client; match:"4347c";)
-block (name:"magic flag page address (ASCII uppercase)"; side:client; match:"4347C";)
-block (name:"magic flag page address (three bytes, force C0)"; side:client; match:"CG\xC0";)
-block (name:"likely program address 0x0804...."; side:client; match:"\x08\x04";)
-block (name:"likely program address 0x0805...."; side:client; match:"\x08\x05";)
-block (name:"likely stack address (two bytes, 0xbaaa....)"; side:client; match:"\xBA\xAA";)
-admit (name:"whenever we see server data, flush the client stream"; side:server; regex:".*"; flush:client;)

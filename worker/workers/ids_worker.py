@@ -14,7 +14,7 @@ class IDSWorker(Worker):
     def __init__(self):
         rules_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
-            "../../ids_examples",
+            "../../../ids_rules",
             "*.rules"
         )
         self._rules = sorted(glob.glob(rules_dir))

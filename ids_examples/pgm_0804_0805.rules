@@ -1,3 +1,0 @@
-block (name:"likely program address 0x0804...."; side:client; match:"\x08\x04";)
-block (name:"likely program address 0x0805...."; side:client; match:"\x08\x05";)
-admit (name:"whenever we see server data, flush the client stream"; side:server; regex:".*"; flush:client;)

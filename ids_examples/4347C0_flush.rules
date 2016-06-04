@@ -1,2 +1,0 @@
-block (name:"magic flag page address (three bytes, force C0)"; side:client; match:"CG\xC0";)
-admit (name:"whenever we see server data, flush the client stream"; side:server; regex:".*"; flush:client;)
