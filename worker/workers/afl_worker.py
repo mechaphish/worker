@@ -3,6 +3,7 @@ from farnsworth.models import Test, Crash, Bitmap, FuzzerStat
 import datetime
 import fuzzer
 import time
+import rex
 
 import logging
 l = logging.getLogger('crs.worker.workers.afl_worker')
@@ -51,8 +52,15 @@ class AFLWorker(Worker):
         l.info("Got crash of length (%s)!", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        #print repr(self._fuzzer.bitmap())
-        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+        crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
+
+        if crash_kind is None:
+            l.error("encountered crash_kind of None, this shouldn't happen")
+            l.error("binary: %s", self._cbn.path)
+            l.error("crash: %s", t.encode('hex'))
+            return
+
+        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False, kind=crash_kind)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
