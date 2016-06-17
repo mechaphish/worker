@@ -24,6 +24,7 @@ class ColorGuardWorker(Worker):
         self._job.input_test.colorguard_traced = True
         self._job.input_test.save()
 
+        l.debug('Invoking colorguard on cbn %s, testcase %s', job.cbn.id, job.input_test.id)
         self._colorguard = colorguard.ColorGuard(self._cbn.path, str(job.input_test.blob))
 
         if self._colorguard.causes_leak():
