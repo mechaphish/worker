@@ -4,6 +4,7 @@ import colorguard
 
 import logging
 l = logging.getLogger('crs.worker.workers.colorguard_worker')
+l.setLevel("DEBUG")
 
 class ColorGuardWorker(Worker):
     def __init__(self):
@@ -23,7 +24,7 @@ class ColorGuardWorker(Worker):
         self._job.input_test.colorguard_traced = True
         self._job.input_test.save()
 
-        self._colorguard = colorguard.ColorGuard(self._cbn.path, job.input_test.blob)
+        self._colorguard = colorguard.ColorGuard(self._cbn.path, str(job.input_test.blob))
 
         if self._colorguard.causes_leak():
             l.info('Testcase %d causes a leak of the flag page', job.input_test.id)
