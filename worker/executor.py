@@ -12,6 +12,7 @@ from farnsworth.models import (
     IDSJob,
     WereRabbitJob,
     NetworkPollJob,
+    ColorGuardJob,
     to_job_type
 )
 
@@ -42,6 +43,8 @@ class Executor(object):
                     self.work = workers.WereRabbitWorker()
                 elif isinstance(self.job, NetworkPollJob):
                     self.work = workers.NetworkPollWorker()
+                elif isinstance(self.job, ColorGuardJob):
+                    self.work = workers.ColorGuardWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
