@@ -52,7 +52,10 @@ class AFLWorker(Worker):
         l.info("Got crash of length (%s)!", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
+        try:
+            crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
+        except rex.crash.NonCrashingInput:
+            crash_kind = None
 
         if crash_kind is None:
             l.error("encountered crash_kind of None, this shouldn't happen")
