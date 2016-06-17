@@ -54,7 +54,8 @@ class AFLWorker(Worker):
         self._update_bitmap()
         try:
             crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
-        except rex.crash.NonCrashingInput:
+        except Exception as e:
+            l.error("received a %s exception, shouldn't happen", str(e))
             crash_kind = None
 
         if crash_kind is None:
