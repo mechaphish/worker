@@ -6,6 +6,9 @@ import logging
 l = logging.getLogger('crs.worker.workers.colorguard_worker')
 l.setLevel("DEBUG")
 
+# let's look at the output of POV testing, because it's been known to have bugs
+logging.getLogger('rex').setLevel("DEBUG")
+
 class ColorGuardWorker(Worker):
     def __init__(self):
         self._seen = set()
@@ -16,7 +19,7 @@ class ColorGuardWorker(Worker):
 
     def run(self, job):
         '''
-        Drills a testcase.
+        Runs colorguard on a testcase in an attempt to find leaks.
         '''
 
         self._job = job
@@ -31,7 +34,10 @@ class ColorGuardWorker(Worker):
             l.info('Testcase %d causes a leak of the flag page', job.input_test.id)
 
             exploit = self._colorguard.attempt_pov()
-            if not exploit.test_binary():
-                l.error("ColorGuard created POV for Testcase %d, but if failed!", job.input_test.id)
+            if exploit.test_binary():
+                l.info('Binary POV passed simulation tests!')
+            else:
+                l.error('ColorGuard created POV for Testcase %d, but if failed!', job.input_test.id)
+
 
             Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2', blob=exploit.dump_binary())
