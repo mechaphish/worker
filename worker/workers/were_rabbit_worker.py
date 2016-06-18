@@ -1,6 +1,4 @@
-from ..worker import Worker
-from farnsworth.models import Test, Crash, Bitmap
-import datetime
+from .afl_worker import AFLWorker
 import fuzzer
 import time
 
@@ -8,68 +6,17 @@ import logging
 l = logging.getLogger('crs.worker.workers.were_rabbit_worker')
 l.setLevel('DEBUG')
 
-class WereRabbitWorker(Worker):
+class WereRabbitWorker(AFLWorker):
     """
     AFL's crash exploration mode. Affectionately named the 'Peruvian Were Rabbit' by lcamtuf.
     """
     def __init__(self):
-        self._seen = set()
+        super(WereRabbitWorker, self).__init__()
         self._workdir = '/dev/shm/crash_work'
-        self._fuzzer = None
-        self._job = None
-        self._cbn = None
-        self._runtime = 0
-        self._timeout = None
-        self._last_bm = None
-        self._last_sync_time = datetime.datetime.now()
-
-    def _update_bitmap(self):
-        bm = self._fuzzer.bitmap()
-
-        if self._last_bm == bm:
-            return
-        else:
-            self._last_bm = bm
-
-        dbm = self._cbn.bitmap.first()
-        if dbm is not None:
-            dbm.blob = bm
-        else: #except Bitmap.DoesNotExist: #pylint:disable=no-member
-            dbm = Bitmap(blob=bm, cbn=self._cbn)
-        dbm.save()
-
-    def _check_test(self, t):
-        if t in self._seen: return
-        self._seen.add(t)
-
-        l.info("Got test of length (%s)!", len(t))
-        self._job.produced_output = True
-        self._update_bitmap()
-        t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
-
-    def _check_crash(self, t):
-        if t in self._seen: return
-        self._seen.add(t)
-
-        l.info("Got crash of length (%s)!", len(t))
-        self._job.produced_output = True
-        self._update_bitmap()
-        #print repr(self._fuzzer.bitmap())
-        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
-
-    def _sync_new_tests(self):
-        prev_sync_time = self._last_sync_time
-        self._last_sync_time = datetime.datetime.now()
-        new_tests = list(Test.unsynced_testcases('driller', prev_sync_time)) #pylint:disable=no-member
-        if len(new_tests) > 0:
-            blobs = [ str(t.blob) for t in new_tests ]
-            self._seen.update(blobs)
-            self._fuzzer.pollenate(blobs)
-        return len(new_tests)
 
     def _run(self, job):
         '''
-        Runs AFL with the specified number of cores.
+        Runs Were Rabbit crash explorer with the specified number of cores.
         '''
 
         self._job = job
