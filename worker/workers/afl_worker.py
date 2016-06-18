@@ -97,7 +97,7 @@ class AFLWorker(Worker):
             self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen, create_dictionary=True
         )
 
-        l.info("Created fuzzer")
+        l.info("Created fuzzer for cbn %s", job.cbn.id)
         self._fuzzer.start()
         for _ in range(15):
             if self._fuzzer.alive:
