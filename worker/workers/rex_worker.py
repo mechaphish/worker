@@ -63,13 +63,20 @@ class RexWorker(Worker):
         l.debug("generated %d type-2 exploits", len(exploits.leakers))
         # return (type1 exploit, type2 exploit), none if they don't exist
 
-        if exploits.best_type1 is not None:
-            l.info("Adding type 1!")
-            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1', blob=exploits.best_type1.dump_binary())
+        for reg in exploits.register_setters:
+            exploit = exploits.register_setters[reg]
+
+            l.info("Adding %s type 1!", exploit.method_name)
+            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
+                           exploitation_method=exploit.method_name,
+                           blob=exploits.best_type1.dump_binary())
             self._cbn.save()
-        if exploits.best_type2 is not None:
-            l.info("Adding type 2!")
-            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2', blob=exploits.best_type2.dump_binary())
+
+        for exploit in exploits.leakers:
+            l.info("Adding %s type 2!", exploit.method_name)
+            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2',
+                           exploitation_method=exploit.method_name,
+                           blob=exploits.best_type2.dump_binary())
 
     def run(self, job):
         try:
