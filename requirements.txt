@@ -3,6 +3,7 @@ python-dotenv==0.3.0
 fuzzer
 rex
 patcherex
+colorguard
 farnsworth
 network_poll_creator
 # test dependencies
