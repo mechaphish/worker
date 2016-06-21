@@ -40,6 +40,16 @@ class RexWorker(Worker):
         if not crash.exploitable() and not crash.explorable():
             raise ValueError("Crash was not exploitable or explorable")
 
+        if crash.crash_type in [rex.Vulnerability.ARBITRARY_READ]:
+            try:
+                # attempt to create a testcase which will leak the flag
+                # colorguard will trace this later
+                flag_leak = crash.point_to_flag()
+
+                Test.create(cbn=self._cbn, job=self._job, blob=flag_leak)
+            except rex.CannotExploit:
+                l.warning('crash was an arbitrary-read but was unable to point read at flag page')
+
         # maybe we need to do some exploring first
         while crash.explorable():
             l.info("exploring crash in hopes of getting something more valuable")
