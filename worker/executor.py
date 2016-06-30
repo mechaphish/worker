@@ -6,13 +6,15 @@ import workers
 from farnsworth.models import (
     Job,
     AFLJob,
-    DrillerJob,
-    RexJob,
-    PatcherexJob,
-    IDSJob,
-    WereRabbitJob,
-    NetworkPollJob,
     ColorGuardJob,
+    DrillerJob,
+    IDSJob,
+    NetworkPollJob,
+    PatcherexJob,
+    PovFuzzer1Job,
+    PovFuzzer2Job,
+    RexJob,
+    WereRabbitJob,
     to_job_type
 )
 
@@ -29,22 +31,16 @@ class Executor(object):
             if self.job is not None:
                 self.job = to_job_type(self.job)
                 print "[Worker] Running job %s" % self.job_id
-                if isinstance(self.job, AFLJob):
-                    self.work = workers.AFLWorker()
-                elif isinstance(self.job, RexJob):
-                    self.work = workers.RexWorker()
-                elif isinstance(self.job, DrillerJob):
-                    self.work = workers.DrillerWorker()
-                elif isinstance(self.job, PatcherexJob):
-                    self.work = workers.PatcherexWorker()
-                elif isinstance(self.job, IDSJob):
-                    self.work = workers.IDSWorker()
-                elif isinstance(self.job, WereRabbitJob):
-                    self.work = workers.WereRabbitWorker()
-                elif isinstance(self.job, NetworkPollJob):
-                    self.work = workers.NetworkPollWorker()
-                elif isinstance(self.job, ColorGuardJob):
-                    self.work = workers.ColorGuardWorker()
+                if isinstance(self.job, AFLJob): self.work = workers.AFLWorker()
+                elif isinstance(self.job, ColorGuardJob): self.work = workers.ColorGuardWorker()
+                elif isinstance(self.job, DrillerJob): self.work = workers.DrillerWorker()
+                elif isinstance(self.job, IDSJob): self.work = workers.IDSWorker()
+                elif isinstance(self.job, NetworkPollJob): self.work = workers.NetworkPollWorker()
+                elif isinstance(self.job, PatcherexJob): self.work = workers.PatcherexWorker()
+                elif isinstance(self.job, PovFuzzer1Job): self.work = workers.PovFuzzer1Worker()
+                elif isinstance(self.job, PovFuzzer2Job): self.work = workers.PovFuzzer2Worker()
+                elif isinstance(self.job, RexJob): self.work = workers.RexWorker()
+                elif isinstance(self.job, WereRabbitJob): self.work = workers.WereRabbitWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
