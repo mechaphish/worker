@@ -24,15 +24,8 @@ class PovFuzzer2Worker(Worker):
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
-        if crashing_test.triaged:
-            l.error("Pov fuzzer 2 was passed an already triaged testcase, refusing to exploit it")
-            return
 
         l.info("Pov fuzzer 2 beginning to exploit crash %d for cbn %d", crashing_test.id, self._cbn.id)
-
-        # let everyone know this crash has been traced
-        crashing_test.triaged = True
-        crashing_test.save()
 
         pov_fuzzer = rex.pov_fuzzing.Type2CrashFuzzer(self._cbn.path, crash=str(crashing_test.blob))
 
