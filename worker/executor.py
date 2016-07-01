@@ -43,8 +43,8 @@ class Executor(object):
         while self.tries > 0:
             if self.job is not None:
                 self.job = to_job_type(self.job)
-                print "[Worker] Running job %s %s" % (self.job_id,
-                                                      self.__class__.__name__)
+                print "[Worker] Running job %s (class: %s)" % (self.job_id,
+                                                               self.__class__.__name__)
                 if isinstance(self.job, AFLJob):
                     self.work = AFLWorker()
                 elif isinstance(self.job, ColorGuardJob):
