@@ -20,16 +20,16 @@ from farnsworth.models import (
     to_job_type
 )
 
-from workers.afl_worker import AFLWorker
-from workers.colorguard_worker import ColorGuardWorker
-from workers.driller_worker import DrillerWorker
-from workers.ids_worker import IDSWorker
-from workers.network_poll_worker import NetworkPollWorker
-from workers.patcherex_worker import PatcherexWorker
-from workers.pov_fuzzer1_worker import PovFuzzer1Worker
-from workers.pov_fuzzer2_worker import PovFuzzer2Worker
-from workers.rex_worker import RexWorker
-from workers.were_rabbit_worker import WereRabbitWorker
+from .workers.afl_worker import AFLWorker
+from .workers.colorguard_worker import ColorGuardWorker
+from .workers.driller_worker import DrillerWorker
+from .workers.ids_worker import IDSWorker
+from .workers.network_poll_worker import NetworkPollWorker
+from .workers.patcherex_worker import PatcherexWorker
+from .workers.pov_fuzzer1_worker import PovFuzzer1Worker
+from .workers.pov_fuzzer2_worker import PovFuzzer2Worker
+from .workers.rex_worker import RexWorker
+from .workers.were_rabbit_worker import WereRabbitWorker
 
 
 class Executor(object):
