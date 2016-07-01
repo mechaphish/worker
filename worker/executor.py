@@ -46,25 +46,25 @@ class Executor(object):
                 print "[Worker] Running job %s %s" % (self.job_id,
                                                       self.__class__.__name__)
                 if isinstance(self.job, AFLJob):
-                    self.work = workers.AFLWorker()
+                    self.work = AFLWorker()
                 elif isinstance(self.job, ColorGuardJob):
-                    self.work = workers.ColorGuardWorker()
+                    self.work = ColorGuardWorker()
                 elif isinstance(self.job, DrillerJob):
-                    self.work = workers.DrillerWorker()
+                    self.work = DrillerWorker()
                 elif isinstance(self.job, IDSJob):
-                    self.work = workers.IDSWorker()
+                    self.work = IDSWorker()
                 elif isinstance(self.job, NetworkPollJob):
-                    self.work = workers.NetworkPollWorker()
+                    self.work = NetworkPollWorker()
                 elif isinstance(self.job, PatcherexJob):
-                    self.work = workers.PatcherexWorker()
+                    self.work = PatcherexWorker()
                 elif isinstance(self.job, PovFuzzer1Job):
-                    self.work = workers.PovFuzzer1Worker()
+                    self.work = PovFuzzer1Worker()
                 elif isinstance(self.job, PovFuzzer2Job):
-                    self.work = workers.PovFuzzer2Worker()
+                    self.work = PovFuzzer2Worker()
                 elif isinstance(self.job, RexJob):
-                    self.work = workers.RexWorker()
+                    self.work = RexWorker()
                 elif isinstance(self.job, WereRabbitJob):
-                    self.work = workers.WereRabbitWorker()
+                    self.work = WereRabbitWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
