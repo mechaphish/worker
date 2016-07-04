@@ -24,8 +24,6 @@ class ColorGuardWorker(Worker):
 
         self._job = job
         self._cbn = job.cbn
-        self._job.input_test.colorguard_traced = True
-        self._job.input_test.save()
 
         l.debug('Invoking colorguard on cbn %s, testcase %s', job.cbn.id, job.input_test.id)
         self._colorguard = colorguard.ColorGuard(self._cbn.path, str(job.input_test.blob))
@@ -42,3 +40,6 @@ class ColorGuardWorker(Worker):
             Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2',
                            exploitation_method=exploit.method_name,
                            blob=exploit.dump_binary())
+
+        self._job.input_test.colorguard_traced = True
+        self._job.input_test.save()
