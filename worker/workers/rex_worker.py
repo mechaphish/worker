@@ -22,17 +22,9 @@ class RexWorker(Worker):
         self._job = job
         self._cbn = job.cbn
 
-        # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
-        if crashing_test.triaged:
-            l.error("Rex was passed an already triaged testcase, refusing to exploit it")
-            return
 
         l.info("Rex beginning to triage crash %d for cbn %d", crashing_test.id, self._cbn.id)
-
-        # let everyone know this crash has been traced
-        crashing_test.triaged = True
-        crashing_test.save()
 
         crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
         self._crash = crash
@@ -87,6 +79,10 @@ class RexWorker(Worker):
             Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2',
                            exploitation_method=exploit.method_name,
                            blob=exploits.best_type2.dump_binary())
+
+        # let everyone know this crash has been traced
+        crashing_test.triaged = True
+        crashing_test.save()
 
     def run(self, job):
         try:
