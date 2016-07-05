@@ -65,8 +65,7 @@ class RexWorker(Worker):
         l.debug("generated %d type-2 exploits", len(exploits.leakers))
         # return (type1 exploit, type2 exploit), none if they don't exist
 
-        for reg in exploits.register_setters:
-            exploit = exploits.register_setters[reg]
+        for exploit in exploits.register_setters:
 
             l.info("Adding %s type 1!", exploit.method_name)
             Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
