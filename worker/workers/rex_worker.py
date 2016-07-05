@@ -58,7 +58,7 @@ class RexWorker(Worker):
         self._exploits = exploits
 
         if exploits.best_type1 is None and exploits.best_type2 is None:
-            raise rex.CannotExploit("crash had symptoms of exploitability, but no exploits could be built")
+            l.error("crash had symptoms of exploitability, but no exploits could be built")
 
         l.info("crash was able to be exploited")
         l.debug("can set %d registers with type-1 exploits", len(exploits.register_setters))
