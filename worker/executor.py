@@ -17,6 +17,7 @@ from farnsworth.models import (
     PovFuzzer2Job,
     RexJob,
     WereRabbitJob,
+    FunctionIdentifierJob,
     to_job_type
 )
 
@@ -30,6 +31,7 @@ from .workers.pov_fuzzer1_worker import PovFuzzer1Worker
 from .workers.pov_fuzzer2_worker import PovFuzzer2Worker
 from .workers.rex_worker import RexWorker
 from .workers.were_rabbit_worker import WereRabbitWorker
+from .workers.function_identifier_worker import FunctionIdentifierWorker
 
 
 class Executor(object):
@@ -65,6 +67,8 @@ class Executor(object):
                     self.work = RexWorker()
                 elif isinstance(self.job, WereRabbitJob):
                     self.work = WereRabbitWorker()
+                elif isinstance(self.job, FunctionIdentifierJob):
+                    self.work = FunctionIdentifierWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
