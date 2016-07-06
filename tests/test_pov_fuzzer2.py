@@ -5,7 +5,7 @@ import os
 from mock import MagicMock
 from nose.tools import *
 
-from worker.workers.pov_fuzzer2_worker import PovFuzzer2Worker
+from worker.workers.pov_fuzzer2 import PovFuzzer2Worker
 from farnsworth_client.models import Job, ChallengeBinaryNode, Crash
 
 class TestPovFuzzer2:

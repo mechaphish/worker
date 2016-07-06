@@ -1,12 +1,16 @@
-from ..worker import Worker
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals, absolute_import
+
 import pwnrex
 
-import logging
-l = logging.getLogger('crs.worker.workers.pwnrex_worker')
-l.setLevel('DEBUG')
+import worker.workers
+LOG = worker.workers.LOG.getChild('pwnrex')
+LOG.setLevel('DEBUG')
 
 
-class PwnrexWorker(Worker):
+class PwnrexWorker(worker.workers.Worker):
     def __init__(self):
         self._job = None
 

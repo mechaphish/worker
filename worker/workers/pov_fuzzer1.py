@@ -1,13 +1,17 @@
-from ..worker import Worker
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals, absolute_import
+
 from farnsworth.models import Exploit
 import rex.pov_fuzzing
 
-import logging
-l = logging.getLogger('crs.worker.workers.pov_fuzzer1_worker')
-l.setLevel('DEBUG')
+import worker.workers
+LOG = worker.workers.LOG.getChild('povfuzzer1')
+LOG.setLevel('DEBUG')
 
 
-class PovFuzzer1Worker(Worker):
+class PovFuzzer1Worker(worker.workers.Worker):
     def __init__(self):
         self._job = None
         self._cbn = None
@@ -25,14 +29,14 @@ class PovFuzzer1Worker(Worker):
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
 
-        l.info("Pov fuzzer 1 beginning to exploit crash %d for cbn %d", crashing_test.id, self._cbn.id)
+        LOG.info("Pov fuzzer 1 beginning to exploit crash %d for cbn %d", crashing_test.id, self._cbn.id)
 
         pov_fuzzer = rex.pov_fuzzing.Type1CrashFuzzer(self._cbn.path, crash=str(crashing_test.blob))
 
         if not pov_fuzzer.exploitable():
             raise ValueError("Crash was not exploitable")
 
-        l.info("crash was able to be exploited")
+        LOG.info("crash was able to be exploited")
 
         Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
                        exploitation_method="type1fuzzer",
@@ -45,4 +49,4 @@ class PovFuzzer1Worker(Worker):
             job.input_crash.exploitable = False
             job.input_crash.save()
             # FIXME: log exception somewhere
-            l.error(e)
+            LOG.error(e)

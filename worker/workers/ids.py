@@ -1,15 +1,16 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
 """Generate simple IDS rules from Jacopo's examples."""
 
-import os
-import glob
-from ..worker import Worker
-from farnsworth.models import IDSRule
+from __future__ import unicode_literals, absolute_import
 
-import logging
-l = logging.getLogger('crs.worker.workers.ids_worker')
-l.setLevel('DEBUG')
+import worker.workers
+LOG = worker.workers.LOG.getChild('ids')
+LOG.setLevel('DEBUG')
 
-class IDSWorker(Worker):
+
+class IDSWorker(worker.workers.Worker):
     """Generate simple IDS rules from Jacopo's examples."""
     def __init__(self):
         rules_dir = os.path.join(

@@ -1,13 +1,17 @@
-from ..worker import Worker
-from farnsworth.models import ChallengeBinaryNode
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals, absolute_import
+
+from farnsworth.models import ChallengeBinaryNode
 from patcherex.patch_master import PatchMaster
 
-import logging
-l = logging.getLogger('crs.worker.workers.pathcerex_worker')
-l.setLevel('DEBUG')
+import worker.workers
+LOG = worker.workers.LOG.getChild('patcherex')
+LOG.setLevel('DEBUG')
 
-class PatcherexWorker(Worker):
+
+class PatcherexWorker(worker.workers.Worker):
     def __init__(self):
         self._job = None
 

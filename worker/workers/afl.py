@@ -1,15 +1,20 @@
-from ..worker import Worker
-from farnsworth.models import Test, Job, Crash, Bitmap, FuzzerStat, ChallengeBinaryNode
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
 import datetime
-import fuzzer
 import time
+
+from farnsworth.models import (Bitmap, ChallengeBinaryNode Crash, FuzzerStat,
+                               Job, Test)
+import fuzzer
 import rex
 
-import logging
-l = logging.getLogger('crs.worker.workers.afl_worker')
-l.setLevel('DEBUG')
+import worker.workers
+LOG = worker.workers.LOG.getChild('afl')
+LOG.setLevel('DEBUG')
 
-class AFLWorker(Worker):
+
+class AFLWorker(worker.workers.Worker):
     def __init__(self):
         self._workername = 'afl'
         self._seen = set()
@@ -41,7 +46,7 @@ class AFLWorker(Worker):
         if t in self._seen: return
         self._seen.add(t)
 
-        l.info("Got test of length %s", len(t))
+        LOG.info("Got test of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
         t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
@@ -50,19 +55,19 @@ class AFLWorker(Worker):
         if t in self._seen: return
         self._seen.add(t)
 
-        l.info("Got crash of length %s", len(t))
+        LOG.info("Got crash of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
         try:
             crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
-        except Exception as e: #pylint:disable=broad-except
-            l.error("received a %s exception, shouldn't happen", str(e))
+        except Exception as e:  # pylint: disable=broad-except
+            LOG.error("Received a %s exception, shouldn't happen", str(e))
             crash_kind = None
 
         if crash_kind is None:
-            l.error("encountered crash_kind of None, this shouldn't happen")
-            l.error("binary: %s", self._cbn.path)
-            l.error("crash: %s", t.encode('hex'))
+            LOG.error("Encountered crash_kind of None, this shouldn't happen")
+            LOG.error("Binary: %s", self._cbn.path)
+            LOG.error("Crash: %s", t.encode('hex'))
             return
 
         Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False, kind=crash_kind)
@@ -72,22 +77,20 @@ class AFLWorker(Worker):
         self._last_sync_time = datetime.datetime.now()
 
         # any new tests which come from a different worker which apply to the same binary
-        new_tests = list(
-                Test.unsynced_testcases(prev_sync_time).\
-                    join(Job).where(Job.worker != self._workername).\
-                    join(ChallengeBinaryNode).where(ChallengeBinaryNode.id == self._cbn.id) #pylint:disable=no-member
-                )
+        new_tests = list(Test.unsynced_testcases(prev_sync_time).
+                         join(Job).where(Job.worker != self._workername).
+                         join(ChallengeBinaryNode).
+                         where(ChallengeBinaryNode.id == self._cbn.id)) # pylint:disable=no-member
 
         if len(new_tests) > 0:
             blobs = [ str(t.blob) for t in new_tests ]
             self._seen.update(blobs)
             self._fuzzer.pollenate(blobs)
+
         return len(new_tests)
 
     def _run(self, job):
-        '''
-        Runs AFL with the specified number of cores.
-        '''
+        """Run AFL with the specified number of cores."""
 
         self._job = job
         self._cbn = job.cbn
@@ -98,14 +101,14 @@ class AFLWorker(Worker):
         if len(all_tests) > 0:
             self._seen.update(str(t.blob) for t in all_tests)
 
-        l.info("Initializing fuzzer stats")
+        LOG.info("Initializing fuzzer stats")
         fs = FuzzerStat.create(cbn=self._cbn)
 
-        self._fuzzer = fuzzer.Fuzzer(
-            self._cbn.path, self._workdir, self._job.limit_cpu, seeds=self._seen, create_dictionary=True
-        )
+        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir,
+                                     self._job.limit_cpu, seeds=self._seen,
+                                     create_dictionary=True)
 
-        l.info("Created fuzzer for cbn %s", job.cbn.id)
+        LOG.info("Created fuzzer for cbn %s", job.cbn.id)
         self._fuzzer.start()
         for _ in range(15):
             if self._fuzzer.alive:
@@ -114,13 +117,13 @@ class AFLWorker(Worker):
         else:
             raise Exception("Fuzzer failed to start")
 
-        l.info("Started fuzzer")
+        LOG.info("Started fuzzer")
 
         while self._timeout is None or self._runtime < self._timeout:
             time.sleep(5)
             self._runtime += 5
 
-            l.debug("Updating fuzzer stats...")
+            LOG.debug("Updating fuzzer stats...")
             fs.pending_favs = int(self._fuzzer.stats['fuzzer-1']['pending_favs'])
             fs.pending_total = int(self._fuzzer.stats['fuzzer-1']['pending_total'])
             fs.paths_total = int(self._fuzzer.stats['fuzzer-1']['paths_total'])
@@ -128,17 +131,17 @@ class AFLWorker(Worker):
             fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
             fs.save()
 
-            l.debug("Checking results...")
+            LOG.debug("Checking results...")
 
             for c in self._fuzzer.crashes():
                 self._check_crash(c)
             for c in self._fuzzer.queue():
                 self._check_test(c)
 
-            l.debug("Syncing new testcases...")
+            LOG.debug("Syncing new testcases...")
             n = self._sync_new_tests()
             if n > 0:
-                l.debug("... synced %d new testcases", n)
+                LOG.debug("... synced %d new testcases!", n)
 
     def run(self, job):
         try:
