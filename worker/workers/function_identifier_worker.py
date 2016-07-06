@@ -27,14 +27,9 @@ class FunctionIdentifierWorker(Worker):
 
         l.info("Identifier initialized running...")
 
-        idfer.run()
+        for addr, symbol in idfer.run():
+            l.debug("Identified %s at %#x", symbol, addr)
+            FunctionIdentity.create(cbn=self._cbn, address=addr, symbol=symbol)
 
-        l.info("Identified %d functions", len(idfer.matches))
-
-        for function in idfer.matches:
-            address = function.addr
-            symbol = idfer.matches[function][0]
-            l.debug("Function %s found at address %#x", symbol, address)
-            FunctionIdentity.create(cbn=self._cbn, address=address, symbol=symbol)
-
+        l.debug("Idenitified a total of %d functions", len(idfer.matches))
         l.info("Done identifying functions for challenge %s", self._cbn.name)
