@@ -6,7 +6,6 @@ patcherex
 colorguard
 farnsworth
 network_poll_creator
-network_poll_sanitizer
 # test dependencies
 mock>=1.3.0
 nose>=1.3.7
