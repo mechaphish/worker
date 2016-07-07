@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth.models import Test, Job, Crash, Bitmap, FuzzerStat
+from farnsworth.models import Test, Job, Crash, Bitmap, FuzzerStat, ChallengeBinaryNode
 import datetime
 import fuzzer
 import time
@@ -41,7 +41,7 @@ class AFLWorker(Worker):
         if t in self._seen: return
         self._seen.add(t)
 
-        l.info("Got test of length (%s)!", len(t))
+        l.info("Got test of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
         t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
@@ -50,7 +50,7 @@ class AFLWorker(Worker):
         if t in self._seen: return
         self._seen.add(t)
 
-        l.info("Got crash of length (%s)!", len(t))
+        l.info("Got crash of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
         try:
@@ -70,9 +70,13 @@ class AFLWorker(Worker):
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
         self._last_sync_time = datetime.datetime.now()
+
+        # any new tests which come from a different worker which apply to the same binary
         new_tests = list(
-                Test.unsynced_testcases(prev_sync_time).where(Job.worker != self._workername)
-                ) #pylint:disable=no-member
+                Test.unsynced_testcases(prev_sync_time).\
+                    join(Job).where(Job.worker != self._workername).\
+                    join(ChallengeBinaryNode).where(ChallengeBinaryNode.id == self._cbn.id) #pylint:disable=no-member
+                )
 
         if len(new_tests) > 0:
             blobs = [ str(t.blob) for t in new_tests ]
@@ -133,7 +137,8 @@ class AFLWorker(Worker):
 
             l.debug("Syncing new testcases...")
             n = self._sync_new_tests()
-            l.debug("... synced %d new testcases!", n)
+            if n > 0:
+                l.debug("... synced %d new testcases", n)
 
     def run(self, job):
         try:
