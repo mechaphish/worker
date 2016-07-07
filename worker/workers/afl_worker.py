@@ -1,5 +1,5 @@
 from ..worker import Worker
-from farnsworth.models import Test, Crash, Bitmap, FuzzerStat
+from farnsworth.models import Test, Job, Crash, Bitmap, FuzzerStat
 import datetime
 import fuzzer
 import time
@@ -11,6 +11,7 @@ l.setLevel('DEBUG')
 
 class AFLWorker(Worker):
     def __init__(self):
+        self._workername = 'afl'
         self._seen = set()
         self._workdir = '/dev/shm/work'
         self._fuzzer = None
@@ -54,7 +55,7 @@ class AFLWorker(Worker):
         self._update_bitmap()
         try:
             crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
-        except Exception as e:
+        except Exception as e: #pylint:disable=broad-except
             l.error("received a %s exception, shouldn't happen", str(e))
             crash_kind = None
 
@@ -69,7 +70,10 @@ class AFLWorker(Worker):
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
         self._last_sync_time = datetime.datetime.now()
-        new_tests = list(Test.unsynced_testcases('driller', prev_sync_time)) #pylint:disable=no-member
+        new_tests = list(
+                Test.unsynced_testcases(prev_sync_time).where(Job.worker != self._workername)
+                ) #pylint:disable=no-member
+
         if len(new_tests) > 0:
             blobs = [ str(t.blob) for t in new_tests ]
             self._seen.update(blobs)

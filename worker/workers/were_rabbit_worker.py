@@ -12,6 +12,7 @@ class WereRabbitWorker(AFLWorker):
     """
     def __init__(self):
         super(WereRabbitWorker, self).__init__()
+        self._workername = 'were_rabbit'
         self._workdir = '/dev/shm/crash_work'
 
     def _run(self, job):
