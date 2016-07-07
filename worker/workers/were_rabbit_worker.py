@@ -1,4 +1,5 @@
 from .afl_worker import AFLWorker
+import datetime
 import fuzzer
 import time
 
@@ -12,6 +13,7 @@ class WereRabbitWorker(AFLWorker):
     """
     def __init__(self):
         super(WereRabbitWorker, self).__init__()
+        self._workername = 'were_rabbit'
         self._workdir = '/dev/shm/crash_work'
 
     def _run(self, job):
@@ -30,6 +32,8 @@ class WereRabbitWorker(AFLWorker):
             self._seen.update(str(c.blob) for c in all_crashes)
         else:
             raise Exception("No crashes found to explore (why was I scheduled?)")
+
+        self._last_sync_time = datetime.datetime.min
 
         l.info("Starting up crash fuzzer")
         self._fuzzer = fuzzer.Fuzzer(
