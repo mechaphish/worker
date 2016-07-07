@@ -11,7 +11,7 @@ LOG = worker.workers.LOG.getChild('povfuzzer2')
 LOG.setLevel('DEBUG')
 
 
-class PovFuzzer2Worker(workers.worker.Worker):
+class PovFuzzer2Worker(worker.workers.Worker):
     def __init__(self):
         self._job = None
         self._cbn = None
