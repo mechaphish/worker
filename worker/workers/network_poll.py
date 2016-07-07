@@ -36,7 +36,7 @@ class NetworkPollWorker(worker.workers.Worker):
 
         # Process the polls
         count = 0
-        for cs, xml in (p.cs_id, p.to_cfe_xml() for p in traffic_processor.get_polls()):
+        for cs, xml in ((p.cs_id, p.to_cfe_xml()) for p in traffic_processor.get_polls()):
             if cs is not None and xml is not None:
                 RawRoundPoll.create(round=round_traffic.round, cs=target_cs,
                                     blob=target_poll_xml)
