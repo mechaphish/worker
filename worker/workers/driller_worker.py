@@ -7,8 +7,7 @@ import logging
 l = logging.getLogger('crs.worker.workers.driller_worker')
 l.setLevel('DEBUG')
 
-logging.getLogger("tracer").setLevel("DEBUG")
-logging.getLogger("driller").setLevel("DEBUG")
+logging.getLogger("driller").setLevel("INFO")
 
 class DrillerWorker(Worker):
 
