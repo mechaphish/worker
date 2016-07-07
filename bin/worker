@@ -1,7 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
 
-from os import environ as ENV
+"""Executable for worker. Entrypoint for Docker image."""
+
+from __future__ import unicode_literals, absolute_import
+
+import os
+
 import worker.executor
 
-job_id = int(ENV['JOB_ID'])
-worker.executor.Executor(job_id).run()
+worker.executor.Executor(int(os.environ['JOB_ID'])).run()
