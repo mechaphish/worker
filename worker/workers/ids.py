@@ -5,6 +5,11 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import os
+import glob
+
+from farnsworth.models import IDSRule
+
 import worker.workers
 LOG = worker.workers.LOG.getChild('ids')
 LOG.setLevel('DEBUG')
