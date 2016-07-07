@@ -4,7 +4,7 @@
 import datetime
 import time
 
-from farnsworth.models import (Bitmap, ChallengeBinaryNode Crash, FuzzerStat,
+from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat,
                                Job, Test)
 import fuzzer
 import rex
