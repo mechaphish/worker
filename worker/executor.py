@@ -5,7 +5,7 @@ from __future__ import unicode_literals, absolute_import
 
 from farnsworth.models import (Job, AFLJob, ColorGuardJob, DrillerJob,
     FunctionIdentifierJob, IDSJob, NetworkPollJob, PatcherexJob,
-    PovFuzzer1Job, PovFuzzer2Job, RexJob, WereRabbitJob)
+    PovFuzzer1Job, PovFuzzer2Job, RexJob, WereRabbitJob, to_job_type)
 
 from .workers.afl import AFLWorker
 from .workers.colorguard import ColorGuardWorker
