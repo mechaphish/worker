@@ -6,6 +6,7 @@
 from __future__ import unicode_literals, absolute_import
 
 import angr
+from farnsworth.models import FunctionIdentity
 import identifier
 
 import worker.workers
