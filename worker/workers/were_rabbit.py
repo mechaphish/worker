@@ -24,7 +24,6 @@ class WereRabbitWorker(AFLWorker):
 
     def _run(self, job):
         """Run Were Rabbit crash explorer."""
-
         self._job = job
         self._cbn = job.cbn
         self._timeout = job.limit_time
