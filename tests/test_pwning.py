@@ -1,13 +1,20 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import, unicode_literals
+
 import os
 import time
+import threading
+
 import dotenv
 dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '../../farnsworth/.env'))
 
-from farnsworth.models import ChallengeBinaryNode, AFLJob, DrillerJob, RexJob, Test, Crash, Exploit
-import farnsworth
+from farnsworth.models import (ChallengeSet, ChallengeBinaryNode, AFLJob,
+                               DrillerJob, RexJob, Test, Crash, Exploit)
+
 import worker
 
-import threading
 class AFLThread(threading.Thread):
     def __init__(self, job):
         super(AFLThread, self).__init__()
@@ -18,20 +25,18 @@ class AFLThread(threading.Thread):
         self._worker = worker.workers.AFLWorker()
         self._worker.run(self._job)
 
+
 def try_drilling(name, get_crashes):
     # set up the node
-    try:
-        cbn = farnsworth.models.ChallengeBinaryNode.get(name=name)
-    except ChallengeBinaryNode.DoesNotExist: #pylint:disable=no-member
-        print "Creating CBN"
-        cbn = ChallengeBinaryNode.create(name=name, parent_id=None, cs_id=name.split('_')[0])
-        cbn.root = cbn
-        cbn.save()
+    cs = ChallengeSet.get_or_create(name=name.split('_')[0])
+    cbn = ChallengeBinaryNode.get_create(name=name, cs=cs)
+    cbn.root = cbn
+    cbn.save()
 
     Exploit.delete().where(Exploit.cbn == cbn).execute()
 
-    if len(cbn.crashes) == 0 or get_crashes:
-        # delete the testcases
+    if not cbn.crashes or get_crashes:
+        # Delete the testcases
         Test.delete().where(Test.cbn == cbn).execute()
         Crash.delete().where(Crash.cbn == cbn).execute()
 

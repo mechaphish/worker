@@ -22,7 +22,6 @@ class PatcherexWorker(worker.workers.Worker):
 
         for i,p in enumerate(patches):
             ChallengeBinaryNode.create(
-                parent=job.cbn,
                 root=job.cbn,
                 cs=job.cbn.cs,
                 name=job.cbn.name+"_patched_"+str(i),
