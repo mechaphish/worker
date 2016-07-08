@@ -1,10 +1,16 @@
-from ..worker import Worker
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals, absolute_import
+
 import threading
 import time
 
-import logging
-l = logging.getLogger('crs.worker.workers.test_worker')
-l.setLevel('DEBUG')
+import worker.workers
+
+LOG = worker.workers.LOG.getChild('test')
+LOG.setLevel('DEBUG')
+
 LOITER_TIME = 300  # 5 - minutes
 MAX_RETRY_TIMES = 10000  # maximum number of times to try for jobs to run
 
@@ -16,7 +22,6 @@ class CRSAPIWrapper:
 
     def get_testjobs(self):
         """
-
         :return:
         """
         all_jobs = []
@@ -27,7 +32,6 @@ class CRSAPIWrapper:
 
     def mark_testjob_busy(self, busy_test_job):
         """
-
         :param busy_test_job:
         :return:
         """
@@ -35,7 +39,7 @@ class CRSAPIWrapper:
                                                 busy_test_job.testcase_id)
 
 
-class TestWorker(Worker):
+class TestWorker(worker.workers.Worker):
     def __init__(self, number_of_vms=2):
         self.max_vms = number_of_vms
         self.free_vms = set()
@@ -47,7 +51,6 @@ class TestWorker(Worker):
 
     def get_free_vm(self):
         """
-
         :return:
         """
         to_ret = None
@@ -56,7 +59,7 @@ class TestWorker(Worker):
                 if len(self.free_vms) > 0:
                     to_ret = self.free_vms.pop()
         else:
-            l.error("Free VMs member is None. This should never happen.")
+            LOG.error("Free VMs member is None. This should never happen.")
         return to_ret
 
     def put_free_vm(self, to_free_vm):
@@ -104,13 +107,12 @@ class TestWorker(Worker):
 
     def _run(self, job, test_vm):
         """
-
         :param job:
         :param test_vm:
         :return:
         """
         # TODO: finish this
-        l.debug("Trying to run job:" + str(job) + " on VM:" + str(test_vm))
+        LOG.debug("Trying to run job:" + str(job) + " on VM:" + str(test_vm))
         # Run Job
         # Update the result to do.
         pass
@@ -122,7 +124,7 @@ class TestWorker(Worker):
         :return: None
         """
         try:
-            l.debug("Starting Test Worker")
+            LOG.debug("Starting Test Worker")
             # Get the free VM.
             target_free_vm = self.get_free_vm()
             # Schedule the job
@@ -145,7 +147,7 @@ class TestWorker(Worker):
                     # Sleep only if there are no jobs to run
                     time.sleep(idle_sleep_time)
                     tries_remaining -= 1
-            l.debug("Exiting Test Worker as there are no jobs to run")
+            LOG.debug("Exiting Test Worker as there are no jobs to run")
 
         except Exception as e:
-            l.error("Error occurred while trying to run job:" + str(job) + ", Exception:" + str(e))
+            LOG.error("Error occurred while trying to run job:" + str(job) + ", Exception:" + str(e))

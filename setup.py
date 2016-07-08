@@ -1,11 +1,18 @@
+"""Shellphish CRS worker setuptools."""
+
 from setuptools import setup
 
-setup(
-    name='worker',
-    version='0.0.1',
-    packages=[ 'worker', 'worker.workers' ],
-    scripts=['bin/worker'],
-    install_requires=[i.strip() for i in open('requirements.txt').readlines() if 'git' not in i],
-    description='Worker component of the Shellphish CRS.',
-    url='https://git.seclab.cs.ucsb.edu/cgc/worker',
-)
+# Read requirements from requirements.txt
+requires = []   # pylint: disable=invalid-name
+with open("requirements.txt") as requirements:
+    for requirement in requirements:
+        if "git" not in requirement:
+            requires.append(requirement.strip())
+
+setup(name='worker',
+      version="0.0.2",
+      packages=["worker", "worker.workers"],
+      scripts=["bin/worker"],
+      install_requires=requires,
+      description="Worker component of the Shellphish CRS.",
+      url="https://git.seclab.cs.ucsb.edu/cgc/worker")

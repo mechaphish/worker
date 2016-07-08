@@ -1,37 +1,23 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import os
-import time
-import timeout_decorator
+from __future__ import unicode_literals, absolute_import
 
-from farnsworth.models import (
-    Job,
-    AFLJob,
-    ColorGuardJob,
-    DrillerJob,
-    IDSJob,
-    NetworkPollJob,
-    PatcherexJob,
-    PovFuzzer1Job,
-    PovFuzzer2Job,
-    RexJob,
-    WereRabbitJob,
-    FunctionIdentifierJob,
-    to_job_type
-)
+from farnsworth.models import (Job, AFLJob, ColorGuardJob, DrillerJob,
+    FunctionIdentifierJob, IDSJob, NetworkPollJob, PatcherexJob,
+    PovFuzzer1Job, PovFuzzer2Job, RexJob, WereRabbitJob, to_job_type)
 
-from .workers.afl_worker import AFLWorker
-from .workers.colorguard_worker import ColorGuardWorker
-from .workers.driller_worker import DrillerWorker
-from .workers.ids_worker import IDSWorker
-from .workers.network_poll_worker import NetworkPollWorker
-from .workers.patcherex_worker import PatcherexWorker
-from .workers.pov_fuzzer1_worker import PovFuzzer1Worker
-from .workers.pov_fuzzer2_worker import PovFuzzer2Worker
-from .workers.rex_worker import RexWorker
-from .workers.were_rabbit_worker import WereRabbitWorker
-from .workers.function_identifier_worker import FunctionIdentifierWorker
+from .workers.afl import AFLWorker
+from .workers.colorguard import ColorGuardWorker
+from .workers.driller import DrillerWorker
+from .workers.function_identifier import FunctionIdentifierWorker
+from .workers.ids import IDSWorker
+from .workers.network_poll import NetworkPollWorker
+from .workers.patcherex import PatcherexWorker
+from .workers.pov_fuzzer1 import PovFuzzer1Worker
+from .workers.pov_fuzzer2 import PovFuzzer2Worker
+from .workers.rex import RexWorker
+from .workers.were_rabbit import WereRabbitWorker
 
 
 class Executor(object):
@@ -53,6 +39,8 @@ class Executor(object):
                     self.work = ColorGuardWorker()
                 elif isinstance(self.job, DrillerJob):
                     self.work = DrillerWorker()
+                elif isinstance(self.job, FunctionIdentifierJob):
+                    self.work = FunctionIdentifierWorker()
                 elif isinstance(self.job, IDSJob):
                     self.work = IDSWorker()
                 elif isinstance(self.job, NetworkPollJob):
@@ -67,8 +55,6 @@ class Executor(object):
                     self.work = RexWorker()
                 elif isinstance(self.job, WereRabbitJob):
                     self.work = WereRabbitWorker()
-                elif isinstance(self.job, FunctionIdentifierJob):
-                    self.work = FunctionIdentifierWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
@@ -79,7 +65,6 @@ class Executor(object):
             time.sleep(3)
 
         print "[Worker] Job #%s not found" % self.job_id
-
 
     def _timed_execution(self):
         self.job.started()
