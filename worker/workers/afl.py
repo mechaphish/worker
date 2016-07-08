@@ -18,12 +18,11 @@ LOG.setLevel('DEBUG')
 
 class AFLWorker(worker.workers.Worker):
     def __init__(self):
+        super(AFLWorker, self).__init__()
         self._workername = 'afl'
         self._seen = set()
         self._workdir = '/dev/shm/work'
         self._fuzzer = None
-        self._job = None
-        self._cbn = None
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
@@ -91,7 +90,7 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
-    def _run(self, job):
+    def _start(self, job):
         """Run AFL with the specified number of cores."""
 
         self._job = job
@@ -145,9 +144,9 @@ class AFLWorker(worker.workers.Worker):
             if n > 0:
                 LOG.debug("... synced %d new testcases!", n)
 
-    def run(self, job):
+    def _run(self, job):
         try:
-            self._run(job)
+            self._start(job)
         finally:
             if self._fuzzer is not None:
                 self._fuzzer.kill()

@@ -16,13 +16,12 @@ class DrillerWorker(worker.workers.Worker):
     DONT_HOOK = ["malloc", "free", "realloc", "printf", "snprintf"]
 
     def __init__(self):
+        super(DrillerWorker, self).__init__()
         self._seen = set()
         self._driller = None
-        self._job = None
-        self._cbn = None
         self._seen = set()
 
-    def run(self, job):
+    def _run(self, job):
         """Drill a testcase."""
         self._job = job
         self._cbn = job.cbn

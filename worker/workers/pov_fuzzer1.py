@@ -13,18 +13,14 @@ LOG.setLevel('DEBUG')
 
 class PovFuzzer1Worker(worker.workers.Worker):
     def __init__(self):
-        self._job = None
-        self._cbn = None
+        super(PovFuzzer1Worker, self).__init__()
         self._exploits = None
         self._crash = None
 
-    def _run(self, job):
+    def _start(self, job):
         """
         Runs PovFuzzer on the crashing testcase.
         """
-
-        self._job = job
-        self._cbn = job.cbn
 
         # TODO: handle the possibility of a job submitting a PoV, rex already supports this
         crashing_test = job.input_crash
@@ -42,9 +38,9 @@ class PovFuzzer1Worker(worker.workers.Worker):
                        exploitation_method="type1fuzzer",
                        blob=pov_fuzzer.dump_binary())
 
-    def run(self, job):
+    def _run(self, job):
         try:
-            self._run(job)
+            self._start(job)
         except (rex.CannotExploit, ValueError) as e:
             job.input_crash.exploitable = False
             job.input_crash.save()

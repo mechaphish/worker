@@ -41,6 +41,7 @@ class CRSAPIWrapper:
 
 class TestWorker(worker.workers.Worker):
     def __init__(self, number_of_vms=2):
+        super(TestWorker, self).__init__()
         self.max_vms = number_of_vms
         self.free_vms = set()
         # TODO: Change this
@@ -105,7 +106,7 @@ class TestWorker(worker.workers.Worker):
 
         return final_result, performance_json
 
-    def _run(self, job, test_vm):
+    def _log_run(self, job, test_vm):
         """
         :param job:
         :param test_vm:
@@ -117,7 +118,7 @@ class TestWorker(worker.workers.Worker):
         # Update the result to do.
         pass
 
-    def run(self, job):
+    def _run(self, job):
         """
 
         :param job:
@@ -128,7 +129,7 @@ class TestWorker(worker.workers.Worker):
             # Get the free VM.
             target_free_vm = self.get_free_vm()
             # Schedule the job
-            self._run(job, target_free_vm)
+            self._log_run(job, target_free_vm)
             # Restore the free VM
             self.put_free_vm(target_free_vm)
             tries_remaining = MAX_RETRY_TIMES
@@ -140,7 +141,7 @@ class TestWorker(worker.workers.Worker):
                     for curr_job in to_run_jobs:
                         target_free_vm = self.get_free_vm()
                         if self.crshelper.mark_testjob_busy(curr_job):
-                            self._run(curr_job, target_free_vm)
+                            self._log_run(curr_job, target_free_vm)
                         self.put_free_vm(target_free_vm)
                     tries_remaining = MAX_RETRY_TIMES
                 else:

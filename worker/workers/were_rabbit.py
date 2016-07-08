@@ -22,10 +22,8 @@ class WereRabbitWorker(AFLWorker):
         self._workername = 'were_rabbit'
         self._workdir = "/dev/shm/crash_work"
 
-    def _run(self, job):
+    def _start(self, job):
         """Run Were Rabbit crash explorer."""
-        self._job = job
-        self._cbn = job.cbn
         self._timeout = job.limit_time
 
         # first, get the crahes we have currently discovered, these will be used
@@ -70,9 +68,9 @@ class WereRabbitWorker(AFLWorker):
             n = self._sync_new_tests()
             LOG.debug("... synced %d new testcases!", n)
 
-    def run(self, job):
+    def _run(self, job):
         try:
-            self._run(job)
+            self._start(job)
         finally:
             if self._fuzzer is not None:
                 self._fuzzer.kill()

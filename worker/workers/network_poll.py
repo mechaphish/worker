@@ -20,7 +20,10 @@ LOG.setLevel('DEBUG')
 class NetworkPollWorker(worker.workers.Worker):
     """Create CFE POLL from captured network traffic."""
 
-    def run(self, job):
+    def __init__(self):
+        super(NetworkPollWorker, self).__init__()
+
+    def _run(self, job):
         assert isinstance(job, NetworkPollJob)
 
         # Save the pickled data into a file

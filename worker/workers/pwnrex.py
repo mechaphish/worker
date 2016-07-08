@@ -12,7 +12,7 @@ LOG.setLevel('DEBUG')
 
 class PwnrexWorker(worker.workers.Worker):
     def __init__(self):
-        self._job = None
+        super(PwnrexWorker, self).__init__()
 
     def _run(self, job):
         '''
@@ -22,6 +22,3 @@ class PwnrexWorker(worker.workers.Worker):
         # TODO: handle the possibility of a job submitting a PoV, rex already
         # supports this
         pwnrex.Pwnrex(job.binary.path, job.pcaps)
-
-    def run(self, job):
-        self._run(job)

@@ -18,6 +18,8 @@ LOG.setLevel('DEBUG')
 class IDSWorker(worker.workers.Worker):
     """Generate simple IDS rules from Jacopo's examples."""
     def __init__(self):
+        super(IDSWorker, self).__init__()
+
         rules_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             "../../../ids_rules",
@@ -25,7 +27,7 @@ class IDSWorker(worker.workers.Worker):
         )
         self._rules = sorted(glob.glob(rules_dir))
 
-    def run(self, job):
+    def _run(self, job):
         for rule_path in self._rules:
             rules = open(rule_path, 'r').read()
             IDSRule.create(cs=job.cs, rules=rules)

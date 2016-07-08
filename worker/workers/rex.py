@@ -14,15 +14,12 @@ LOG.setLevel('DEBUG')
 
 class RexWorker(worker.workers.Worker):
     def __init__(self):
-        self._job = None
-        self._cbn = None
+        super(RexWorker, self).__init__()
         self._exploits = None
         self._crash = None
 
     def _run(self, job):
         """Run rex on the crashing testcase."""
-        self._job = job
-        self._cbn = job.cbn
 
         crashing_test = job.input_crash
 

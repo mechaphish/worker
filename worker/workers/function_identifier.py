@@ -17,12 +17,10 @@ LOG.setLevel('DEBUG')
 class FunctionIdentifierWorker(worker.workers.Worker):
     """Generate simple identities for functions, will be used to hook up simprocedues."""
     def __init__(self):
-        self._job = None
-        self._cbn = None
+        super(FunctionIdentifierWorker, self).__init__()
 
-    def run(self, job):
-        self._job = job
-        self._cbn = job.cbn
+    def _run(self, job):
+
         # TODO enfore time limit
 
         project = angr.Project(self._cbn.path)
