@@ -43,10 +43,10 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
         else:
             CMLOG.warning("cachemanager's cbn was never set, no cache to retrieve")
 
-    def cacher(self):
+    def cacher(self, simstate):
 
         if self._cbn is not None:
-            cdata = self._prepare_cache_data()
+            cdata = self._prepare_cache_data(simstate)
             if cdata is not None:
                 CMLOG.info("caching tracer state for challenge %s", self._cbn.name)
 
