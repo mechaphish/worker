@@ -50,7 +50,7 @@ class Worker(object):
     def __init__(self):
         # Tracer cache set up for every job in case they use tracer
         self.tracer_cache = CRSTracerCacheManager()
-        tracer.tracerfile.GlobalCacheManager = self.tracer_cache
+        tracer.tracer.GlobalCacheManager = self.tracer_cache
 
         self._job = None
         self._cbn = None
