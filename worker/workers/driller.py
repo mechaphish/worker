@@ -11,18 +11,19 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('driller')
 LOG.setLevel('INFO')
 
+import logging
+logging.getLogger("driller").setLevel("INFO")
 
 class DrillerWorker(worker.workers.Worker):
     DONT_HOOK = ["malloc", "free", "realloc", "printf", "snprintf"]
 
     def __init__(self):
+        super(DrillerWorker, self).__init__()
         self._seen = set()
         self._driller = None
-        self._job = None
-        self._cbn = None
         self._seen = set()
 
-    def run(self, job):
+    def _run(self, job):
         """Drill a testcase."""
         self._job = job
         self._cbn = job.cbn
@@ -33,10 +34,10 @@ class DrillerWorker(worker.workers.Worker):
                 continue
 
             if symbol in SimProcedures['libc.so.6']:
-                LOG.debug("Hooking up %#x -> %s", addr, symbol)
+                LOG.info("Hooking up %#x -> %s", addr, symbol)
                 hooks[addr] = SimProcedures['libc.so.6'][symbol]
 
-        LOG.debug("Hooked up %d addresses to simprocedures", len(hooks))
+        LOG.info("Hooked up %d addresses to simprocedures", len(hooks))
 
         self._driller = driller.Driller(self._cbn.path, job.input_test.blob,
                                         self._cbn.bitmap.first().blob, 'tag',

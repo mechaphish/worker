@@ -17,13 +17,12 @@ LOG.setLevel('DEBUG')
 
 class ColorGuardWorker(worker.workers.Worker):
     def __init__(self):
+        super(ColorGuardWorker, self).__init__()
         self._seen = set()
         self._colorguard = None
-        self._job = None
-        self._cbn = None
         self._seen = set()
 
-    def run(self, job):
+    def _run(self, job):
         """Run colorguard on a testcase in an attempt to find leaks."""
 
         self._job = job

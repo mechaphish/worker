@@ -13,9 +13,9 @@ LOG.setLevel('DEBUG')
 
 class PatcherexWorker(worker.workers.Worker):
     def __init__(self):
-        self._job = None
+        super(PatcherexWorker, self).__init__()
 
-    def run(self, job):
+    def _run(self, job):
         input_file = job.cbn.path
         pm = PatchMaster(input_file)
         patches = pm.run()
