@@ -35,25 +35,25 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
                     where(ChallengeBinaryNode.id == self._cbn.id) # pylint:disable=no-member
 
             if tquery.exists():
-                print "loading tracer state from cache"
+                CMLOG.info("loading tracer state from cache")
                 tc = tquery.get()
                 rdata = pickle.loads(str(tc.blob))
 
             return rdata
         else:
-            print "cachemanager's cbn was never set, no cache to retrieve"
+            CMLOG.warning("cachemanager's cbn was never set, no cache to retrieve")
 
     def cacher(self, simstate):
 
         if self._cbn is not None:
             cdata = self._prepare_cache_data(simstate)
             if cdata is not None:
-                print "caching tracer state for challenge %s" % self._cbn.name
+                CMLOG.info("caching tracer state for challenge %s", self._cbn.name)
 
             TracerCache.create(cbn=self._cbn, blob=cdata)
 
         else:
-            print "ChallengeBinaryNode never set by `set_cbn` can't cache"
+            CMLOG.warning("ChallengeBinaryNode never set by `set_cbn` can't cache")
 
 class Worker(object):
 
