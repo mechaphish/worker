@@ -32,17 +32,18 @@ class NetworkPollWorker(worker.workers.Worker):
         round_traffic = job.target_round_traffic
         LOG.info("Trying to create poll for round %s", round_traffic.round.num)
         with open(curr_pcap_file_path, 'wb') as fp:
-            fp.write(job.pickled_data)
+            fp.write(round_traffic.pickled_data)
 
         # Process the pickled file
         traffic_processor = TrafficProcessor(curr_pcap_file_path)
 
         # Process the polls
         count = 0
-        for cs, xml in ((p.cs_id, p.to_cfe_xml()) for p in traffic_processor.get_polls()):
+        for cs, xml, curr_poll in ((p.cs_id, p.to_cfe_xml(), p) for p in traffic_processor.get_polls()):
+            cs = ChallengeSet.get(ChallengeSet.name == cs)
             if cs is not None and xml is not None:
-                RawRoundPoll.create(round=round_traffic.round, cs=target_cs,
-                                    blob=target_poll_xml)
+                RawRoundPoll.create(round=round_traffic.round, cs=cs,
+                                    blob=xml)
                 count += 1
             elif cs is None:
                 LOG.error("Unable to find ChallengeSet for id %s, ignoring poll",
