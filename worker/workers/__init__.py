@@ -1,80 +1,67 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-import worker.log
-
-LOG = worker.log.LOG.getChild('workers')
-CMLOG = worker.log.LOG.getChild('cachemanager')
+from __future__ import absolute_import, unicode_literals
 
 import pickle
+
 import tracer
-from tracer import tracer as tracerfile
 from farnsworth.models import TracerCache, ChallengeBinaryNode
 
+import worker.log
+LOG = worker.log.LOG.getChild('workers')
+
+
 class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
-    """
-    CRSTracerCacheManager
-    This class manages tracer caches for a given worker.
-    Under-the-hood tracer will call into this code to both load
-    and store caches.
-    """
+    """CRSTracerCacheManager
 
+    This class manages tracer caches for a given worker. Under-the-hood tracer
+    will call into this code to both load and store caches.
+    """
     def __init__(self):
-        super(CRSTracerCacheManager, self).__init__()
-
-        self._cbn = None
-
-    def set_cbn(self, cbn):
-        self._cbn = cbn
+        super(self.__class__, self).__init__()
+        self.log = worker.log.LOG.getChild('cachemanager')
+        self.cbn = None
 
     def cache_lookup(self):
-
-        if self._cbn is not None:
+        # Might better be a property?
+        if self.cbn is not None:
             rdata = None
-            tquery = TracerCache.select().join(ChallengeBinaryNode).\
-                    where(ChallengeBinaryNode.id == self._cbn.id) # pylint:disable=no-member
-
-            if tquery.exists():
-                CMLOG.info("loading tracer state from cache")
-                tc = tquery.get()
-                rdata = pickle.loads(str(tc.blob))
-
-            return rdata
+            try:
+                cached = TracerCache.get(TracerCache.cbn == self.cbn)
+                self.log.info("Loaded tracer state from cache for %s", self.cbn.name)
+                return pickle.loads(str(cached.blob))
+            except TracerCache.DoesNotExist:
+                self.log.debug("No cached states found for %s", self.cbn.name)
         else:
-            CMLOG.warning("cachemanager's cbn was never set, no cache to retrieve")
+            self.log.warning("cachemanager's cbn was never set, no cache to retrieve")
 
     def cacher(self, simstate):
-
-        if self._cbn is not None:
-            cdata = self._prepare_cache_data(simstate)
-            if cdata is not None:
-                CMLOG.info("caching tracer state for challenge %s", self._cbn.name)
-
-            TracerCache.create(cbn=self._cbn, blob=cdata)
-
+        if self.cbn is not None:
+            cache_data = self._prepare_cache_data(simstate)
+            if cache_data is not None:
+                self.log.info("Caching tracer state for challenge %s", self.cbn.name)
+            TracerCache.create(cbn=self.cbn, blob=cache_data)
         else:
-            CMLOG.warning("ChallengeBinaryNode never set by `set_cbn` can't cache")
+            self.log.warning("ChallengeBinaryNode was never set by 'set_cbn' cannot cache")
+
 
 class Worker(object):
-
     def __init__(self):
-
-        # tracer cache set up for every job in case they use tracer
-        self.tcacher = CRSTracerCacheManager()
-        tracerfile.GlobalCacheManager = self.tcacher
+        # Tracer cache set up for every job in case they use tracer
+        self.tracer_cache = CRSTracerCacheManager()
+        tracer.tracer.GlobalCacheManager = self.tracer_cache
 
         self._job = None
         self._cbn = None
 
     def _run(self, job):
-        raise NotImplementedError
+        raise NotImplementedError("Worker must implement _run(self, job)")
 
     def run(self, job):
-
-        # set up job, cbn, and tracer cache
+        # Set up job, cbn, and tracer cache
         self._job = job
         self._cbn = job.cbn
-
-        self.tcacher.set_cbn(self._cbn)
+        self.tracer_cache.cbn = self._cbn
 
         self._run(job)
