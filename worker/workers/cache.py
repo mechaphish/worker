@@ -21,8 +21,6 @@ class CacheWorker(worker.workers.Worker):
 
     def _run(self, job):
         """Create a cache"""
-        self._job = job
-        self._cbn = job.cbn
 
         # run until the first receive
         tracer.Tracer(self._cbn.path, str("")).run()

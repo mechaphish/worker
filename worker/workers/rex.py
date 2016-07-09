@@ -18,7 +18,7 @@ class RexWorker(worker.workers.Worker):
         self._exploits = None
         self._crash = None
 
-    def _run(self, job):
+    def _start(self, job):
         """Run rex on the crashing testcase."""
 
         crashing_test = job.input_crash
@@ -82,9 +82,9 @@ class RexWorker(worker.workers.Worker):
         crashing_test.triaged = True
         crashing_test.save()
 
-    def run(self, job):
+    def _run(self, job):
         try:
-            self._run(job)
+            self._start(job)
         except (rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
             job.input_crash.explorable = False
             job.input_crash.exploitable = False
