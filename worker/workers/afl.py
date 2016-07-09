@@ -78,13 +78,13 @@ class AFLWorker(worker.workers.Worker):
         self._last_sync_time = datetime.datetime.now()
 
         # any new tests which come from a different worker which apply to the same binary
-        new_tests = list(Test.unsynced_testcases(prev_sync_time).
-                         join(Job).where(Job.worker != self._workername).
-                         join(ChallengeBinaryNode).
-                         where(ChallengeBinaryNode.id == self._cbn.id)) # pylint:disable=no-member
+        new_tests = list(Test.unsynced_testcases(prev_sync_time)
+                         .join(Job).where(Job != self._job)
+                         .join(ChallengeBinaryNode)
+                         .where(ChallengeBinaryNode == self._cbn))
 
-        if len(new_tests) > 0:
-            blobs = [ str(t.blob) for t in new_tests ]
+        if new_tests:
+            blobs = [str(t.blob) for t in new_tests]
             self._seen.update(blobs)
             self._fuzzer.pollenate(blobs)
 
@@ -99,7 +99,7 @@ class AFLWorker(worker.workers.Worker):
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
         all_tests = list(self._cbn.tests)
-        if len(all_tests) > 0:
+        if all_tests:
             self._seen.update(str(t.blob) for t in all_tests)
 
         LOG.info("Initializing fuzzer stats")
