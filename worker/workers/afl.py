@@ -83,8 +83,8 @@ class AFLWorker(worker.workers.Worker):
                          .join(ChallengeBinaryNode)
                          .where(ChallengeBinaryNode == self._cbn))
 
-        if len(new_tests) > 0:
-            blobs = [ str(t.blob) for t in new_tests ]
+        if new_tests:
+            blobs = [str(t.blob) for t in new_tests]
             self._seen.update(blobs)
             self._fuzzer.pollenate(blobs)
 
@@ -99,7 +99,7 @@ class AFLWorker(worker.workers.Worker):
 
         # first, get the seeds we currently have, for the entire CB, not just for this binary
         all_tests = list(self._cbn.tests)
-        if len(all_tests) > 0:
+        if all_tests:
             self._seen.update(str(t.blob) for t in all_tests)
 
         LOG.info("Initializing fuzzer stats")
