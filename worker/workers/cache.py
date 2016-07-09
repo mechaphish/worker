@@ -3,13 +3,16 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 import tracer
+
 import worker.workers
 LOG = worker.workers.LOG.getChild('cache')
 LOG.setLevel('INFO')
 
-import logging
 logging.getLogger("tracer").setLevel("INFO")
+
 
 class CacheWorker(worker.workers.Worker):
 
