@@ -18,11 +18,13 @@ class PatcherexWorker(worker.workers.Worker):
     def _run(self, job):
         input_file = job.cbn.path
         pm = PatchMaster(input_file)
-        patches = pm.run()
+        patches = pm.run(return_dict=True)
 
-        for i,p in enumerate(patches):
+        for patch_type, p in patches.iteritems():
+            name = "{}_patched_{}".format(job.cbn.name, patch_type)
             ChallengeBinaryNode.create(
                 root=job.cbn,
                 cs=job.cbn.cs,
-                name=job.cbn.name+"_patched_"+str(i),
+                name=name,
+                patch_type=patch_type,
                 blob=p)
