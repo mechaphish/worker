@@ -79,7 +79,7 @@ class AFLWorker(worker.workers.Worker):
 
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time).
-                         join(Job).where(Job.worker != self._workername).
+                         join(Job).where(Job.id != self._job.id).
                          join(ChallengeBinaryNode).
                          where(ChallengeBinaryNode.id == self._cbn.id)) # pylint:disable=no-member
 
