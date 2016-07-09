@@ -61,8 +61,6 @@ class WereRabbitWorker(AFLWorker):
 
             for c in self._fuzzer.crashes():
                 self._check_crash(c)
-            for c in self._fuzzer.queue():
-                self._check_test(c)
 
             LOG.debug("Syncing new testcases...")
             n = self._sync_new_tests()
