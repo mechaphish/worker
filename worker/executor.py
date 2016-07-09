@@ -8,10 +8,12 @@ import time
 import timeout_decorator
 
 from farnsworth.models import (Job, AFLJob, ColorGuardJob, DrillerJob,
-    FunctionIdentifierJob, IDSJob, NetworkPollJob, PatcherexJob,
-    PovFuzzer1Job, PovFuzzer2Job, RexJob, WereRabbitJob, to_job_type)
+                               FunctionIdentifierJob, IDSJob, NetworkPollJob,
+                               PatcherexJob, PovFuzzer1Job, PovFuzzer2Job,
+                               RexJob, WereRabbitJob, CacheJob, to_job_type)
 
 from .workers.afl import AFLWorker
+from .workers.cache import CacheWorker
 from .workers.colorguard import ColorGuardWorker
 from .workers.driller import DrillerWorker
 from .workers.function_identifier import FunctionIdentifierWorker
@@ -39,6 +41,8 @@ class Executor(object):
                                                                self.job.__class__.__name__)
                 if isinstance(self.job, AFLJob):
                     self.work = AFLWorker()
+                elif isinstance(self.job, CacheJob):
+                    self.work = CacheWorker()
                 elif isinstance(self.job, ColorGuardJob):
                     self.work = ColorGuardWorker()
                 elif isinstance(self.job, DrillerJob):
