@@ -7,6 +7,9 @@ import time
 
 import timeout_decorator
 
+# Import settings before everything else
+import worker.settings
+
 from farnsworth.models import (Job, AFLJob, ColorGuardJob, DrillerJob,
                                FunctionIdentifierJob, IDSJob, NetworkPollJob,
                                PatcherexJob, PovFuzzer1Job, PovFuzzer2Job,
