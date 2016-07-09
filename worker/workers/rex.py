@@ -11,12 +11,32 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
 
-
 class RexWorker(worker.workers.Worker):
     def __init__(self):
         super(RexWorker, self).__init__()
         self._exploits = None
         self._crash = None
+
+    @staticmethod
+    def _get_pov_score(exploit):
+
+        return [exploit.test_binary(enable_randomness=True) for _ in range(10)].count(True) / 10.0
+
+    def _save_exploit(self, exploit):
+
+        LOG.info("Adding %s type %d!", exploit.method_name, exploit.cgc_type)
+        type_name = 'type%d' % exploit.cgc_type
+
+        e = Exploit.create(cbn=self._cbn,
+                        job=self._job,
+                        pov_type=type_name,
+                        method=exploit.method_name,
+                        blob=exploit.dump_binary(),
+                        c_code=exploit.dump_c())
+
+        self._cbn.save()
+
+        return e
 
     def _start(self, job):
         """Run rex on the crashing testcase."""
@@ -64,19 +84,14 @@ class RexWorker(worker.workers.Worker):
         LOG.debug("generated %d type-2 exploits", len(exploits.leakers))
         # return (type1 exploit, type2 exploit), none if they don't exist
 
-        for exploit in exploits.register_setters:
+        e_pairs = [ ]
+        for exploit in exploits.register_setters + exploits.leakers:
+            e_pairs.append((exploit, self._save_exploit(exploit)))
 
-            LOG.info("Adding %s type 1!", exploit.method_name)
-            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
-                           exploitation_method=exploit.method_name,
-                           blob=exploits.best_type1.dump_binary())
-            self._cbn.save()
-
-        for exploit in exploits.leakers:
-            LOG.info("Adding %s type 2!", exploit.method_name)
-            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type2',
-                           exploitation_method=exploit.method_name,
-                           blob=exploits.best_type2.dump_binary())
+        # do this in a seperate loop to make sure we don't kill the worker before adding exploits
+        for exploit, e_db in e_pairs:
+            e_db.reliability = self._get_pov_score(exploit)
+            e_db.save()
 
         # let everyone know this crash has been traced
         crashing_test.triaged = True
