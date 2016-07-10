@@ -41,7 +41,7 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
             cache_data = self._prepare_cache_data(simstate)
             if cache_data is not None:
                 self.log.info("Caching tracer state for challenge %s", self.cbn.name)
-            TracerCache.create(cbn=self.cbn, blob=cache_data)
+                TracerCache.create(cbn=self.cbn, blob=cache_data)
         else:
             self.log.warning("ChallengeBinaryNode was never set by 'set_cbn' cannot cache")
 
