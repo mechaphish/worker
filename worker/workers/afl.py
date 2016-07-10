@@ -79,9 +79,8 @@ class AFLWorker(worker.workers.Worker):
 
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time)
-                         .join(Job).where(Job != self._job)
-                         .join(ChallengeBinaryNode)
-                         .where(ChallengeBinaryNode == self._cbn))
+                         .join(Job)
+                         .where((Job.cbn == self._cbn) & (self._job.id != Job.id)))
 
         if new_tests:
             blobs = [str(t.blob) for t in new_tests]
