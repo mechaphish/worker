@@ -11,6 +11,7 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
 
+
 class RexWorker(worker.workers.Worker):
     def __init__(self):
         super(RexWorker, self).__init__()
@@ -19,24 +20,17 @@ class RexWorker(worker.workers.Worker):
 
     @staticmethod
     def _get_pov_score(exploit):
-
         return [exploit.test_binary(enable_randomness=True) for _ in range(10)].count(True) / 10.0
 
     def _save_exploit(self, exploit):
-
         LOG.info("Adding %s type %d!", exploit.method_name, exploit.cgc_type)
         type_name = 'type%d' % exploit.cgc_type
 
-        e = Exploit.create(cbn=self._cbn,
-                        job=self._job,
-                        pov_type=type_name,
-                        method=exploit.method_name,
-                        blob=exploit.dump_binary(),
-                        c_code=exploit.dump_c())
-
+        exploit = Exploit.create(cbn=self._cbn, job=self._job, pov_type=type_name,
+                                 method=exploit.method_name, blob=exploit.dump_binary(),
+                                 c_code=exploit.dump_c())
         self._cbn.save()
-
-        return e
+        return exploit
 
     def _start(self, job):
         """Run rex on the crashing testcase."""
