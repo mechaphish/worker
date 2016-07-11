@@ -89,6 +89,25 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
+
+    def _spawn_fuzzer(self):
+
+        add_extender = False
+        cores = self._job.limit_cpu
+        if self._job.limit_cpu >= 4:
+            LOG.debug("4 or more cores specified, dedicating one to the extender")
+            cores -= 1
+            add_extender = True
+
+        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir,
+                                     cores, seeds=self._seen,
+                                     create_dictionary=True)
+
+        if add_extender:
+            if not self._fuzzer.add_extension('extender'):
+                LOG.warning("Unable to spin-up the extender, using a normal AFL instance instead")
+                self._fuzzer.add_fuzzer()
+
     def _start(self, job):
         """Run AFL with the specified number of cores."""
 
@@ -104,9 +123,7 @@ class AFLWorker(worker.workers.Worker):
         LOG.info("Initializing fuzzer stats")
         fs = FuzzerStat.create(cbn=self._cbn)
 
-        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir,
-                                     self._job.limit_cpu, seeds=self._seen,
-                                     create_dictionary=True)
+        self._spawn_fuzzer()
 
         LOG.info("Created fuzzer for cbn %s", job.cbn.id)
         self._fuzzer.start()
