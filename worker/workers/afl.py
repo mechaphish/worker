@@ -60,7 +60,7 @@ class AFLWorker(worker.workers.Worker):
         self._job.produced_output = True
         self._update_bitmap()
         try:
-            crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
+            pc, crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
         except Exception as e:  # pylint: disable=broad-except
             LOG.error("Received a %s exception, shouldn't happen", str(e))
             crash_kind = None
@@ -71,7 +71,7 @@ class AFLWorker(worker.workers.Worker):
             LOG.error("Crash: %s", t.encode('hex'))
             return
 
-        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False, kind=crash_kind)
+        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False, kind=crash_kind, crash_pc=pc)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
