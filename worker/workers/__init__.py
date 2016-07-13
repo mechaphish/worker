@@ -131,7 +131,7 @@ class VMWorker(Worker):
         not_reachable = True
         try:
             # ThreadingTimeout does not work with PyPy, using signals instead
-            with stopit.SignalingTimeout(self._ssh_timeout, swallow_exc=False):
+            with stopit.SignalTimeout(self._ssh_timeout, swallow_exc=False):
                 while not_reachable:
                     try:
                         connection = socket.create_connection(("127.0.0.1", self._ssh_port))
