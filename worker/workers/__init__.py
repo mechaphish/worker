@@ -151,12 +151,12 @@ class VMWorker(Worker):
             # also raises BadHostKeyException, should be taken care of via AutoAddPolicy()
             # also raises AuthenticationException, should never occur because keys are provisioned
         except socket.error as e:
-            LOG.debug("Unable to connect to VM. VM might have not booted yet. TCP error.")
+            LOG.error("TCP error connecting to SSH on VM.")
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
             raise e
         except paramiko.SSHException as e:
-            LOG.error("Unable to connect to VM. VM might have not booted yet. SSH error.")
+            LOG.error("SSH error trying to connect to VM.")
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
             raise e
