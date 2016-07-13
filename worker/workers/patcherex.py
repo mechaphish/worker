@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import hashlib
+
 from farnsworth.models import ChallengeBinaryNode
 from patcherex.patch_master import PatchMaster
 
@@ -20,11 +22,15 @@ class PatcherexWorker(worker.workers.Worker):
         pm = PatchMaster(input_file)
         patches = pm.run(return_dict=True)
 
-        for patch_type, p in patches.iteritems():
+        for patch_type, (patch, ids) in patches.items():
+            import ipdb; ipdb.set_trace()
+            # FIXME: handle IDS
             name = "{}_patched_{}".format(job.cbn.name, patch_type)
             ChallengeBinaryNode.create(
                 root=job.cbn,
                 cs=job.cbn.cs,
                 name=name,
                 patch_type=patch_type,
-                blob=p)
+                blob=patch,
+                sha256=hashlib.sha256(patch).hexdigest()
+            )
