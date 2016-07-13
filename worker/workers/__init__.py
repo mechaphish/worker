@@ -127,7 +127,7 @@ class VMWorker(Worker):
         LOG.debug("Waiting for SSH to become availabl from worker")
         not_reachable = True
         try:
-            with stopit.Timeout(self._ssh_timeout) as reachable:
+            with stopit.ThreadingTimeout(self._ssh_timeout, swallow_exc=False):
                 while not_reachable:
                     try:
                         connection = socket.create_connection(("127.0.0.1", self._ssh_port))
@@ -140,7 +140,7 @@ class VMWorker(Worker):
             LOG.error("SSH did not become available within %s seconds.", self._ssh_timeout)
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
-            raise EnvironmentError("")
+            raise EnvironmentError("SSH did not become available")
 
         LOG.debug("Connecting to the VM via SSH")
         self.ssh = paramiko.client.SSHClient()
