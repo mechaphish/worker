@@ -105,7 +105,7 @@ class VMWorker(Worker):
                        "-netdev", netdev,
                        "-net", "nic,netdev=fakenet0,model=virtio",
                        "-daemonize",
-                       "-nographic"]
+                       "-vnc", "none"]
         try:
             kvm_process = subprocess.Popen(kvm_command, stdout=subprocess.PIPE,
                                            stderr=subprocess.PIPE)
