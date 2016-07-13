@@ -114,6 +114,8 @@ class VMWorker(Worker):
 
         try:
             stdout, stderr = kvm_process.communicate(timeout=self._kvm_timeout)
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
         except TimeoutExpired:
             LOG.error("VM did not start within %s seconds, killing it", self._kvm_timeout)
             LOG.debug("stdout: %s", stdout)
@@ -128,7 +130,8 @@ class VMWorker(Worker):
         LOG.debug("Waiting for SSH to become availabl from worker")
         not_reachable = True
         try:
-            with stopit.ThreadingTimeout(self._ssh_timeout, swallow_exc=False):
+            # ThreadingTimeout does not work with PyPy, using signals instead
+            with stopit.SignalingTimeout(self._ssh_timeout, swallow_exc=False):
                 while not_reachable:
                     try:
                         connection = socket.create_connection(("127.0.0.1", self._ssh_port))
