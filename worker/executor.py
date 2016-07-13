@@ -27,6 +27,7 @@ from .workers.patcherex import PatcherexWorker
 from .workers.pov_fuzzer1 import PovFuzzer1Worker
 from .workers.pov_fuzzer2 import PovFuzzer2Worker
 from .workers.rex import RexWorker
+from .workers.tester import TesterWorker
 from .workers.were_rabbit import WereRabbitWorker
 
 
@@ -65,6 +66,8 @@ class Executor(object):
                     self.work = PovFuzzer2Worker()
                 elif isinstance(self.job, RexJob):
                     self.work = RexWorker()
+                elif isinstance(self.job, TesterJob):
+                    self.worker = TesterWorker()
                 elif isinstance(self.job, WereRabbitJob):
                     self.work = WereRabbitWorker()
 
