@@ -3,7 +3,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import datetime
+from datetime import datetime
 import time
 
 from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat, Job, Test)
@@ -25,7 +25,7 @@ class AFLWorker(worker.workers.Worker):
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
-        self._last_sync_time = datetime.datetime.now()
+        self._last_sync_time = datetime.now()
 
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
@@ -74,7 +74,7 @@ class AFLWorker(worker.workers.Worker):
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
-        self._last_sync_time = datetime.datetime.now()
+        self._last_sync_time = datetime.now()
 
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time)
@@ -141,7 +141,7 @@ class AFLWorker(worker.workers.Worker):
             fs.pending_total = int(self._fuzzer.stats['fuzzer-1']['pending_total'])
             fs.paths_total = int(self._fuzzer.stats['fuzzer-1']['paths_total'])
             fs.paths_found = int(self._fuzzer.stats['fuzzer-1']['paths_found'])
-            fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
+            fs.last_path = datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
             fs.save()
 
             LOG.debug("Checking results...")
