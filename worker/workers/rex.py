@@ -3,8 +3,9 @@
 
 from __future__ import unicode_literals, absolute_import
 
-from farnsworth.models import Test, Exploit
+from farnsworth.models import Test, Exploit, RopCache
 import rex
+import pickle
 import tracer
 
 import worker.workers
@@ -37,9 +38,18 @@ class RexWorker(worker.workers.Worker):
 
         crashing_test = job.input_crash
 
-        LOG.info("Rex beginning to triage crash %d for cbn %s", crashing_test.id, self._cbn.name)
+        try:
+            cached_blob = str(RopCache.get(RopCache.cbn == self._cbn).blob)
+            cached = pickle.loads(cached_blob)
+            LOG.info("got a rop cache")
+        except RopCache.DoesNotExist:
+            cached = None
+            LOG.info("no rop cache available")
 
-        crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
+        LOG.info("Rex beginning to triage crash %d for cbn %d", crashing_test.id, self._cbn.id)
+
+        use_rop = cached is not None
+        crash = rex.Crash(self._cbn.path, str(crashing_test.blob), use_rop=use_rop, rop_cache_tuple=cached)
         self._crash = crash
 
         if not crash.exploitable() and not crash.explorable():
