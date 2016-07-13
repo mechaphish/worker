@@ -6,13 +6,13 @@ from __future__ import absolute_import, unicode_literals
 import logging
 
 import tracer
+from rex.trace_additions import ZenPlugin
 
 import worker.workers
 LOG = worker.workers.LOG.getChild('cache')
 LOG.setLevel('INFO')
 
 logging.getLogger("tracer").setLevel("INFO")
-
 
 class CacheWorker(worker.workers.Worker):
 
@@ -23,4 +23,8 @@ class CacheWorker(worker.workers.Worker):
         """Create a cache"""
 
         # run until the first receive
-        tracer.Tracer(self._cbn.path, str("")).run()
+        tr = tracer.Tracer(self._cbn.path, str(""))
+        # enable the ZenPlugin
+        ZenPlugin.prep_tracer(tr)
+
+        tr.run()
