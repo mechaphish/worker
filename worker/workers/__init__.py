@@ -74,6 +74,7 @@ class Worker(object):
 class VMWorker(Worker):
     def __init__(self, disk="/data/cgc-vm.qcow2", kvm_timeout=5, sandbox=True, ssh_port=8022,
                  ssh_username="root", ssh_keyfile="/data/cgc-vm.key", vm_name=None):
+        super(self.__class__, self).__init__()
         self._disk = disk
         self._kvm_timeout = kvm_timeout
         self._sandbox = 'on' if sandbox else 'off'
@@ -81,8 +82,6 @@ class VMWorker(Worker):
         self._ssh_username = ssh_username
         self._ssh_keyfile = ssh_keyfile
         self._vm_name = vm_name if vm_name is not None else "cgc"
-
-        super(self.__class__, self).__init__()
 
     @contextlib.contextmanager
     def vm(self):
@@ -152,6 +151,6 @@ class VMWorker(Worker):
         try:
             with self.vm():
                 # Run Worker.run()
-                Worker.run(self, job)
+                super(self.__class__, self).run(self, job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)
