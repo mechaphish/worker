@@ -7,6 +7,7 @@ patcherex
 paramiko
 python-dotenv==0.3.0
 rex
+stopit
 subprocess32
 timeout-decorator
 tracer
