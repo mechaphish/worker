@@ -14,6 +14,7 @@ LOG.setLevel('INFO')
 
 logging.getLogger("tracer").setLevel("INFO")
 
+
 class CacheWorker(worker.workers.Worker):
 
     def __init__(self):
@@ -21,10 +22,10 @@ class CacheWorker(worker.workers.Worker):
 
     def _run(self, job):
         """Create a cache"""
-
-        # run until the first receive
+        # Run until the first receive
         tr = tracer.Tracer(self._cbn.path, str(""))
-        # enable the ZenPlugin
+
+        # Enable the ZenPlugin
         ZenPlugin.prep_tracer(tr)
 
         tr.run()
