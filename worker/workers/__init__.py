@@ -74,16 +74,17 @@ class Worker(object):
 class VMWorker(Worker):
     def __init__(self, disk="/data/cgc-vm.qcow2", kvm_timeout=5, restrict_net=False, sandbox=True,
                  snapshot=True, ssh_port=8022, ssh_username="root", ssh_keyfile="/data/cgc-vm.key",
-                 vm_name=None):
+                 ssh_timeout=30, vm_name=None):
         super(Worker, self).__init__()
         self._disk = disk
         self._kvm_timeout = kvm_timeout
         self._restrict_net = 'on' if restrict_net else 'off'
         self._sandbox = 'on' if sandbox else 'off'
         self._snapshot = 'on' if snapshot else 'off'
-        self._ssh_port = ssh_port
-        self._ssh_username = ssh_username
         self._ssh_keyfile = ssh_keyfile
+        self._ssh_port = ssh_port
+        self._ssh_timeout = ssh_timeout
+        self._ssh_username = ssh_username
         self._vm_name = vm_name if vm_name is not None else "cgc"
 
     @contextlib.contextmanager
