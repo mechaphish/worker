@@ -3,11 +3,10 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import datetime
+from datetime import datetime
 import time
 
-from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat,
-                               Job, Test)
+from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat, Job, Test)
 import fuzzer
 import rex
 
@@ -26,7 +25,7 @@ class AFLWorker(worker.workers.Worker):
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
-        self._last_sync_time = datetime.datetime.now()
+        self._last_sync_time = datetime.now()
 
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
@@ -75,7 +74,7 @@ class AFLWorker(worker.workers.Worker):
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
-        self._last_sync_time = datetime.datetime.now()
+        self._last_sync_time = datetime.now()
 
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time)
@@ -89,9 +88,25 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
+    def _spawn_fuzzer(self):
+        add_extender = False
+        cores = self._job.limit_cpu
+
+        if self._job.limit_cpu >= 4:
+            LOG.debug("4 or more cores specified, dedicating one to the extender")
+            cores -= 1
+            add_extender = True
+
+        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir, cores, seeds=self._seen,
+                                     create_dictionary=True)
+
+        if add_extender:
+            if not self._fuzzer.add_extension('extender'):
+                LOG.warning("Unable to spin-up the extender, using a normal AFL instance instead")
+                self._fuzzer.add_fuzzer()
+
     def _start(self, job):
         """Run AFL with the specified number of cores."""
-
         self._job = job
         self._cbn = job.cbn
         self._timeout = job.limit_time
@@ -104,9 +119,7 @@ class AFLWorker(worker.workers.Worker):
         LOG.info("Initializing fuzzer stats")
         fs = FuzzerStat.create(cbn=self._cbn)
 
-        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir,
-                                     self._job.limit_cpu, seeds=self._seen,
-                                     create_dictionary=True)
+        self._spawn_fuzzer()
 
         LOG.info("Created fuzzer for cbn %s", job.cbn.id)
         self._fuzzer.start()
@@ -128,7 +141,7 @@ class AFLWorker(worker.workers.Worker):
             fs.pending_total = int(self._fuzzer.stats['fuzzer-1']['pending_total'])
             fs.paths_total = int(self._fuzzer.stats['fuzzer-1']['paths_total'])
             fs.paths_found = int(self._fuzzer.stats['fuzzer-1']['paths_found'])
-            fs.last_path = datetime.datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
+            fs.last_path = datetime.fromtimestamp(int(self._fuzzer.stats['fuzzer-master']['last_path']))
             fs.save()
 
             LOG.debug("Checking results...")
