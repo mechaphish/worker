@@ -6,8 +6,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import time
 
-from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat,
-                               Job, Test)
+from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat, Job, Test)
 import fuzzer
 import rex
 
@@ -89,18 +88,16 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
-
     def _spawn_fuzzer(self):
-
         add_extender = False
         cores = self._job.limit_cpu
+
         if self._job.limit_cpu >= 4:
             LOG.debug("4 or more cores specified, dedicating one to the extender")
             cores -= 1
             add_extender = True
 
-        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir,
-                                     cores, seeds=self._seen,
+        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir, cores, seeds=self._seen,
                                      create_dictionary=True)
 
         if add_extender:
@@ -110,7 +107,6 @@ class AFLWorker(worker.workers.Worker):
 
     def _start(self, job):
         """Run AFL with the specified number of cores."""
-
         self._job = job
         self._cbn = job.cbn
         self._timeout = job.limit_time
