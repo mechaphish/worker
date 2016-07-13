@@ -41,8 +41,8 @@ class ColorGuardWorker(worker.workers.Worker):
                 LOG.error("ColorGuard created POV for Testcase %d, but if failed!", job.input_test.id)
 
             Exploit.create(cbn=self._cbn, job=self._job, pov_type="type2",
-                           exploitation_method=exploit.method_name,
-                           blob=exploit.dump_binary())
+                           method=exploit.method_name, blob=exploit.dump_binary(),
+                           c_code=exploit.dump_c())
         else:
             LOG.debug("Unable to find leak or generate exploit for testcase")
 
