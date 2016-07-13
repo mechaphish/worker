@@ -128,7 +128,7 @@ class VMWorker(Worker):
             kvm_process.terminate()
             raise EnvironmentError("KVM start did not boot up properly")
 
-        LOG.debug("Waiting for SSH to become availabl from worker")
+        LOG.debug("Waiting for SSH to become available from worker")
         not_reachable = True
         try:
             # ThreadingTimeout does not work with PyPy, using signals instead
@@ -184,6 +184,6 @@ class VMWorker(Worker):
         try:
             with self.vm():
                 # Run Worker.run()
-                super(Worker, self).run(self, job)
+                Worker.run(self, job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)
