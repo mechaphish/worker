@@ -1,13 +1,15 @@
-timeout-decorator
-python-dotenv==0.3.0
-tracer
-identifier
-fuzzer
-rex
-patcherex
 colorguard
 farnsworth
+fuzzer
+identifier
 network_poll_creator
+patcherex
+paramiko
+python-dotenv==0.3.0
+rex
+subprocess32
+timeout-decorator
+tracer
 
 # test dependencies
 mock>=1.3.0
