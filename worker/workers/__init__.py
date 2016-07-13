@@ -8,6 +8,7 @@ import pickle
 import socket
 
 import paramiko
+import stopit
 import subprocess32 as subprocess
 import tracer
 from farnsworth.models import TracerCache, ChallengeBinaryNode
@@ -122,6 +123,24 @@ class VMWorker(Worker):
             time.sleep(5)
             kvm_process.terminate()
             raise EnvironmentError("KVM start did not boot up properly")
+
+        LOG.debug("Waiting for SSH to become availabl from worker")
+        not_reachable = True
+        try:
+            with stopit.Timeout(self._ssh_timeout) as reachable:
+                while not_reachable:
+                    try:
+                        connection = socket.create_connection(("127.0.0.1", self._ssh_port))
+                        not_reachable = False
+                        connection.close()
+                    except socket.error as e:
+                        LOG.debug("Unable to connect just yet, sleeping")
+                        time.sleep(1)
+        except stopit.TimeoutException:
+            LOG.error("SSH did not become available within %s seconds.", self._ssh_timeout)
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+            raise EnvironmentError("")
 
         LOG.debug("Connecting to the VM via SSH")
         self.ssh = paramiko.client.SSHClient()
