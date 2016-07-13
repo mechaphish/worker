@@ -23,7 +23,6 @@ class PatcherexWorker(worker.workers.Worker):
         patches = pm.run(return_dict=True)
 
         for patch_type, (patch, ids) in patches.items():
-            import ipdb; ipdb.set_trace()
             # FIXME: handle IDS
             name = "{}_patched_{}".format(job.cbn.name, patch_type)
             ChallengeBinaryNode.create(
