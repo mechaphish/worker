@@ -3,9 +3,7 @@
 
 from __future__ import unicode_literals, absolute_import
 
-# let's look at the output of POV testing, because it's been known to have bugs
 import logging
-logging.getLogger('colorguard').setLevel("DEBUG")
 
 import colorguard
 from farnsworth.models import Exploit
@@ -13,6 +11,10 @@ from farnsworth.models import Exploit
 import worker.workers
 LOG = worker.workers.LOG.getChild('colorguard')
 LOG.setLevel('DEBUG')
+
+# Let's look at the output of POV testing, because it's been known to have bugs
+logging.getLogger('colorguard').setLevel("DEBUG")
+
 
 class ColorGuardWorker(worker.workers.Worker):
     def __init__(self):
@@ -23,7 +25,6 @@ class ColorGuardWorker(worker.workers.Worker):
 
     def _run(self, job):
         """Run colorguard on a testcase in an attempt to find leaks."""
-
         self._job = job
         self._cbn = job.cbn
 
