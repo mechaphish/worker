@@ -67,7 +67,7 @@ class Executor(object):
                 elif isinstance(self.job, RexJob):
                     self.work = RexWorker()
                 elif isinstance(self.job, TesterJob):
-                    self.worker = TesterWorker()
+                    self.work = TesterWorker()
                 elif isinstance(self.job, WereRabbitJob):
                     self.work = WereRabbitWorker()
 
