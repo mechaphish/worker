@@ -20,10 +20,10 @@ class RexWorker(worker.workers.Worker):
 
     @staticmethod
     def _get_pov_score(exploit):
-        return [exploit.test_binary(enable_randomness=True) for _ in range(10)].count(True) / 10.0
+        return exploit.test_binary(enable_randomness=True, times=10).count(True) / 10.0
 
     def _save_exploit(self, exploit):
-        LOG.info("Adding %s type %d!", exploit.method_name, exploit.cgc_type)
+        LOG.info("Adding %s type %d", exploit.method_name, exploit.cgc_type)
         type_name = 'type%d' % exploit.cgc_type
 
         exploit = Exploit.create(cbn=self._cbn, job=self._job, pov_type=type_name,
@@ -53,33 +53,22 @@ class RexWorker(worker.workers.Worker):
 
                 Test.create(cbn=self._cbn, job=self._job, blob=flag_leak)
             except rex.CannotExploit:
-                LOG.warning('crash was an arbitrary-read but was unable to point read at flag page')
+                LOG.warning("Crash was an arbitrary-read but was unable to point read at flag page")
 
         # maybe we need to do some exploring first
         while crash.explorable():
-            LOG.info("exploring crash in hopes of getting something more valuable")
+            LOG.info("Exploring crash in hopes of getting something more valuable")
 
             # simultaneously explore and dump the new input into a file
-            crash.explore('/tmp/new-testcase')
+            crash.explore("/tmp/new-testcase")
 
             # upload the new testcase
             # FIXME: we probably want to store it in a different table with custom attrs
-            Test.create(cbn=self._cbn, job=self._job, blob=open('/tmp/new-testcase').read())
+            Test.create(cbn=self._cbn, job=self._job, blob=open("/tmp/new-testcase").read())
 
         # see if we can immiediately begin exploring the crash
-        exploits = crash.exploit()
-        self._exploits = exploits
-
-        if exploits.best_type1 is None and exploits.best_type2 is None:
-            LOG.error("crash had symptoms of exploitability, but no exploits could be built")
-
-        LOG.info("crash was able to be exploited")
-        LOG.debug("can set %d registers with type-1 exploits", len(exploits.register_setters))
-        LOG.debug("generated %d type-2 exploits", len(exploits.leakers))
-        # return (type1 exploit, type2 exploit), none if they don't exist
-
         e_pairs = [ ]
-        for exploit in exploits.register_setters + exploits.leakers:
+        for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit)))
 
         # do this in a seperate loop to make sure we don't kill the worker before adding exploits
