@@ -3,9 +3,6 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import threading
-import time
-
 import worker.workers
 LOG = worker.workers.LOG.getChild('tester')
 LOG.setLevel('DEBUG')
