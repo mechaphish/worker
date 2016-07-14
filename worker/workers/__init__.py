@@ -54,6 +54,7 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
 
 class Worker(object):
     def __init__(self):
+        LOG.debug("Creating Worker")
         # Tracer cache set up for every job in case they use tracer
         self.tracer_cache = CRSTracerCacheManager()
         tracer.tracer.GlobalCacheManager = self.tracer_cache
@@ -78,6 +79,7 @@ class VMWorker(Worker):
                  snapshot=True, ssh_port=8022, ssh_username="root", ssh_keyfile="/data/cgc-vm.key",
                  ssh_timeout=30, vm_name=None):
         super(Worker, self).__init__()
+        LOG.debug("Creating VMWorker")
         self._disk = disk
         self._kvm_timeout = kvm_timeout
         self._restrict_net = 'on' if restrict_net else 'off'
