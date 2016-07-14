@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals, absolute_import
 
+import logging
+
 from farnsworth.models import Test, Exploit, RopCache
 import rex
 import pickle
@@ -12,10 +14,11 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
 
-import logging
 logging.getLogger('rex').setLevel('INFO')
 
+
 class RexWorker(worker.workers.Worker):
+
     def __init__(self):
         super(RexWorker, self).__init__()
         self._exploits = None
@@ -36,9 +39,7 @@ class RexWorker(worker.workers.Worker):
         return exploit
 
     def forge_ahead(self, crash):
-
         while crash.explorable():
-
             # dump a point-to-flag input
             if crash.crash_type in [rex.Vulnerability.ARBITRARY_READ]:
                 try:
@@ -63,7 +64,6 @@ class RexWorker(worker.workers.Worker):
         return crash
 
     def exploit_crash(self, crash):
-
         e_pairs = [ ]
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit)))
@@ -75,7 +75,6 @@ class RexWorker(worker.workers.Worker):
 
     def _start(self, job):
         """Run rex on the crashing testcase."""
-
         crashing_test = job.input_crash
 
         try:
