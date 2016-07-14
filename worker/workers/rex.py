@@ -37,7 +37,7 @@ class RexWorker(worker.workers.Worker):
 
         crashing_test = job.input_crash
 
-        LOG.info("Rex beginning to triage crash %d for cbn %d", crashing_test.id, self._cbn.id)
+        LOG.info("Rex beginning to triage crash %d for cbn %s", crashing_test.id, self._cbn.name)
 
         crash = rex.Crash(self._cbn.path, str(crashing_test.blob))
         self._crash = crash
@@ -83,7 +83,7 @@ class RexWorker(worker.workers.Worker):
     def _run(self, job):
         try:
             self._start(job)
-        except (rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
+        except (rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
             job.input_crash.explorable = False
             job.input_crash.exploitable = False
             job.input_crash.save()
