@@ -30,10 +30,10 @@ class AFLWorker(worker.workers.Worker):
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
 
-        if self._last_bm == bm:
-            return
-        elif bm is None:
+        if bm is None:
             LOG.warning("unable to retrieve bitmap from fuzzer")
+            return
+        elif self._last_bm == bm:
             return
         else:
             self._last_bm = bm
