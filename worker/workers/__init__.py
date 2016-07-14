@@ -183,7 +183,6 @@ class VMWorker(Worker):
     def run(self, job):
         try:
             with self.vm():
-                # Run Worker.run()
-                Worker.run(self, job)
+                super(Worker, self).run(job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)

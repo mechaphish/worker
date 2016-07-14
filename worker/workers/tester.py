@@ -12,6 +12,9 @@ LOG.setLevel('DEBUG')
 
 
 class TesterWorker(worker.workers.VMWorker):
+    def __init__(self):
+        self(worker.workers.VMWorker, self).__init__()
+
     def _run(self, job):
         self.ssh.exec_command("DEBIAN_FRONTEND=noninteractive apt-get update")
         self.ssh.exec_command("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
