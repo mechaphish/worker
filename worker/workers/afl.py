@@ -32,6 +32,9 @@ class AFLWorker(worker.workers.Worker):
 
         if self._last_bm == bm:
             return
+        elif bm is None:
+            LOG.warning("unable to retrieve bitmap from fuzzer")
+            return
         else:
             self._last_bm = bm
 
