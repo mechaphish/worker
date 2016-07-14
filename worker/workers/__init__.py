@@ -3,8 +3,14 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import contextlib
 import pickle
+import socket
+import time
 
+import paramiko
+import stopit
+import subprocess32 as subprocess
 import tracer
 from farnsworth.models import TracerCache, ChallengeBinaryNode
 
@@ -48,6 +54,7 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
 
 class Worker(object):
     def __init__(self):
+        LOG.debug("Creating Worker")
         # Tracer cache set up for every job in case they use tracer
         self.tracer_cache = CRSTracerCacheManager()
         tracer.tracer.GlobalCacheManager = self.tracer_cache
@@ -65,3 +72,118 @@ class Worker(object):
         self.tracer_cache.cbn = self._cbn
 
         self._run(job)
+
+
+class VMWorker(Worker):
+    def __init__(self, disk="/data/cgc-vm.qcow2", kvm_timeout=5, restrict_net=False, sandbox=True,
+                 snapshot=True, ssh_port=8022, ssh_username="root", ssh_keyfile="/data/cgc-vm.key",
+                 ssh_timeout=30, vm_name=None):
+        super(VMWorker, self).__init__()
+        self._disk = disk
+        self._kvm_timeout = kvm_timeout
+        self._restrict_net = 'on' if restrict_net else 'off'
+        self._sandbox = 'on' if sandbox else 'off'
+        self._snapshot = 'on' if snapshot else 'off'
+        self._ssh_keyfile = ssh_keyfile
+        self._ssh_port = ssh_port
+        self._ssh_timeout = ssh_timeout
+        self._ssh_username = ssh_username
+        self._vm_name = vm_name if vm_name is not None else "cgc"
+
+    @contextlib.contextmanager
+    def vm(self):
+        LOG.debug("Spawning up VM to run jobs within")
+        drive = "file={0._disk},media=disk,discard=unmap,snapshot={0._snapshot},if=virtio".format(self)
+        netdev = ("user,id=fakenet0,net=172.16.6.0/24,restrict={0._restrict_net},"
+                  "hostfwd=tcp:127.0.0.1:{0._ssh_port}-:22,").format(self)
+
+        kvm_command = ["kvm", "-name", self._vm_name,
+                       "-sandbox", self._sandbox,
+                       "-machine", "pc-i440fx-1.7,accel=kvm,usb=off",
+                       "-cpu", "SandyBridge",
+                       "-snapshot",
+                       "-drive", drive,
+                       "-netdev", netdev,
+                       "-net", "nic,netdev=fakenet0,model=virtio",
+                       "-daemonize",
+                       "-vnc", "none"]
+        try:
+            kvm_process = subprocess.Popen(kvm_command, stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+        except OSError as e:
+            LOG.error("Is KVM installed? Popen raised %s", e)
+            raise EnvironmentError("Unable to start VM, KVM process failed %s", e)
+
+        try:
+            stdout, stderr = kvm_process.communicate(timeout=self._kvm_timeout)
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+        except TimeoutExpired:
+            LOG.error("VM did not start within %s seconds, killing it", self._kvm_timeout)
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+            kvm_process.kill()
+
+            LOG.warning("5 seconds grace period before forcefully killing VM")
+            time.sleep(5)
+            kvm_process.terminate()
+            raise EnvironmentError("KVM start did not boot up properly")
+
+        LOG.debug("Waiting for SSH to become available from worker")
+        not_reachable = True
+        try:
+            # ThreadingTimeout does not work with PyPy, using signals instead
+            with stopit.SignalTimeout(self._ssh_timeout, swallow_exc=False):
+                while not_reachable:
+                    try:
+                        connection = socket.create_connection(("127.0.0.1", self._ssh_port))
+                        not_reachable = False
+                        connection.close()
+                    except socket.error as e:
+                        LOG.debug("Unable to connect just yet, sleeping")
+                        time.sleep(1)
+        except stopit.TimeoutException:
+            LOG.error("SSH did not become available within %s seconds.", self._ssh_timeout)
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+            raise EnvironmentError("SSH did not become available")
+
+        LOG.debug("Connecting to the VM via SSH")
+        self.ssh = paramiko.client.SSHClient()
+        self.ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+        try:
+            self.ssh.connect("127.0.0.1", port=self._ssh_port, username=self._ssh_username,
+                            key_filename=self._ssh_keyfile, timeout=self._ssh_timeout)
+            # also raises BadHostKeyException, should be taken care of via AutoAddPolicy()
+            # also raises AuthenticationException, should never occur because keys are provisioned
+        except socket.error as e:
+            LOG.error("TCP error connecting to SSH on VM.")
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+            raise e
+        except paramiko.SSHException as e:
+            LOG.error("SSH error trying to connect to VM.")
+            LOG.debug("stdout: %s", stdout)
+            LOG.debug("stderr: %s", stderr)
+            raise e
+
+        LOG.debug("Setting up route to database etc.")
+        try:
+            self.ssh.exec_command("ip r add default via 172.16.6.2")
+        except paramiko.SSHException as e:
+            LOG.error("Unable to setup routes on host: %s", e)
+            raise e
+
+        LOG.debug("Passing control over to the Worker")
+        yield
+
+        LOG.debug("Worker finished, cleaning up SSH connection and VM")
+        self.ssh.close()
+        kvm_process.terminate()
+
+    def run(self, job):
+        try:
+            with self.vm():
+                super(VMWorker, self).run(job)
+        except EnvironmentError as e:
+            LOG.error("Error preparing VM for execution: %s", e)

@@ -3,28 +3,28 @@
 
 """Create raw CFE POLL from captured network traffic"""
 
-from __future__ import unicode_literals, absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import os
 
 from network_poll_creator import TrafficProcessor
-from farnsworth.models import NetworkPollJob
+from farnsworth.models import NetworkPollCreatorJob
 from farnsworth.models.raw_round_poll import RawRoundPoll
 from farnsworth.models.challenge_set import ChallengeSet
 
 import worker.workers
-LOG = worker.workers.LOG.getChild('network_poll')
+LOG = worker.workers.LOG.getChild('network_poll_creator')
 LOG.setLevel('DEBUG')
 
 
-class NetworkPollWorker(worker.workers.Worker):
+class NetworkPollCreatorWorker(worker.workers.Worker):
     """Create CFE POLL from captured network traffic."""
 
     def __init__(self):
-        super(NetworkPollWorker, self).__init__()
+        super(self.__class__, self).__init__()
 
     def _run(self, job):
-        assert isinstance(job, NetworkPollJob)
+        assert isinstance(job, NetworkPollCreatorJob)
 
         # Save the pickled data into a file
         curr_pcap_file_path = os.path.join(os.path.expanduser('~'),

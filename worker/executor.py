@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals, absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import time
 
@@ -10,10 +10,11 @@ import timeout_decorator
 # Import settings before everything else
 import worker.settings
 
-from farnsworth.models import (Job, AFLJob, ColorGuardJob, DrillerJob,
-                               FunctionIdentifierJob, IDSJob, NetworkPollJob,
-                               PatcherexJob, PovFuzzer1Job, PovFuzzer2Job,
-                               RexJob, WereRabbitJob, CacheJob, to_job_type)
+from farnsworth.models import (to_job_type, Job, AFLJob, CacheJob,
+                               ColorGuardJob, DrillerJob, FunctionIdentifierJob,
+                               IDSJob, NetworkPollCreatorJob, PatcherexJob,
+                               PovFuzzer1Job, PovFuzzer2Job, RexJob,
+                               WereRabbitJob, TesterJob)
 
 from .workers.afl import AFLWorker
 from .workers.cache import CacheWorker
@@ -21,11 +22,12 @@ from .workers.colorguard import ColorGuardWorker
 from .workers.driller import DrillerWorker
 from .workers.function_identifier import FunctionIdentifierWorker
 from .workers.ids import IDSWorker
-from .workers.network_poll import NetworkPollWorker
+from .workers.network_poll_creator import NetworkPollCreatorWorker
 from .workers.patcherex import PatcherexWorker
 from .workers.pov_fuzzer1 import PovFuzzer1Worker
 from .workers.pov_fuzzer2 import PovFuzzer2Worker
 from .workers.rex import RexWorker
+from .workers.tester import TesterWorker
 from .workers.were_rabbit import WereRabbitWorker
 
 
@@ -54,8 +56,8 @@ class Executor(object):
                     self.work = FunctionIdentifierWorker()
                 elif isinstance(self.job, IDSJob):
                     self.work = IDSWorker()
-                elif isinstance(self.job, NetworkPollJob):
-                    self.work = NetworkPollWorker()
+                elif isinstance(self.job, NetworkPollCreatorJob):
+                    self.work = NetworkPollCreatorWorker()
                 elif isinstance(self.job, PatcherexJob):
                     self.work = PatcherexWorker()
                 elif isinstance(self.job, PovFuzzer1Job):
@@ -64,6 +66,8 @@ class Executor(object):
                     self.work = PovFuzzer2Worker()
                 elif isinstance(self.job, RexJob):
                     self.work = RexWorker()
+                elif isinstance(self.job, TesterJob):
+                    self.work = TesterWorker()
                 elif isinstance(self.job, WereRabbitJob):
                     self.work = WereRabbitWorker()
 
