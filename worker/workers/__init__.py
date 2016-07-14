@@ -78,8 +78,7 @@ class VMWorker(Worker):
     def __init__(self, disk="/data/cgc-vm.qcow2", kvm_timeout=5, restrict_net=False, sandbox=True,
                  snapshot=True, ssh_port=8022, ssh_username="root", ssh_keyfile="/data/cgc-vm.key",
                  ssh_timeout=30, vm_name=None):
-        LOG.debug("Creating VMWorker")
-        super(Worker, self).__init__()
+        super(VMWorker, self).__init__()
         self._disk = disk
         self._kvm_timeout = kvm_timeout
         self._restrict_net = 'on' if restrict_net else 'off'
@@ -182,9 +181,9 @@ class VMWorker(Worker):
         self.ssh.close()
         kvm_process.terminate()
 
-    def _run(self, job):
+    def run(self, job):
         try:
             with self.vm():
-                self._vm_run(job)
+                super(VMWorker, self).run(job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)
