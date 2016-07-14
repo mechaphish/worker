@@ -13,7 +13,7 @@ LOG.setLevel('DEBUG')
 
 class TesterWorker(worker.workers.VMWorker):
     def __init__(self):
-        super(self.___class__, self).__init__()
+        super(self.__class__, self).__init__()
 
     def _vm_run(self, job):
         self.ssh.exec_command("DEBIAN_FRONTEND=noninteractive apt-get update")
