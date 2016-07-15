@@ -3,9 +3,7 @@
 
 from __future__ import absolute_import, unicode_literals
 
-import logging
 import pickle
-
 
 import angr
 import angrop  # pylint: disable=unused-import
@@ -31,4 +29,4 @@ class RopCacheWorker(worker.workers.Worker):
         rop.find_gadgets_single_threaded()
         cache_data = pickle.dumps(rop._get_cache_tuple(),
                                   pickle.HIGHEST_PROTOCOL)
-        RopCache.create(cbn=self._cbn, blob=cache_data)
+        RopCache.create(cs=self._cs, blob=cache_data)

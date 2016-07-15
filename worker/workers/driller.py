@@ -21,15 +21,12 @@ class DrillerWorker(worker.workers.Worker):
         super(DrillerWorker, self).__init__()
         self._seen = set()
         self._driller = None
-        self._seen = set()
 
     def _run(self, job):
         """Drill a testcase."""
-        self._job = job
-        self._cbn = job.cbn
 
         hooks = dict()
-        for addr, symbol in self._cbn.symbols.items():
+        for addr, symbol in self._cs.symbols.items():
             if symbol in self.DONT_HOOK:
                 continue
 
@@ -49,7 +46,7 @@ class DrillerWorker(worker.workers.Worker):
             self._seen.add(t)
 
             LOG.info("Found new testcase (of length %s)!", len(t))
-            Test.create(cbn=self._cbn, job=self._job, blob=t)
+            Test.create(cs=self._cs, job=self._job, blob=t)
 
         self._job.input_test.drilled = True
         self._job.input_test.save()

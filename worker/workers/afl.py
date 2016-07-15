@@ -14,10 +14,13 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('afl')
 LOG.setLevel('DEBUG')
 
+import logging
+logging.getLogger("fuzzer").setLevel("DEBUG")
 
 class AFLWorker(worker.workers.Worker):
     def __init__(self):
         super(AFLWorker, self).__init__()
+        self._cbn_paths = None
         self._workername = 'afl'
         self._seen = set()
         self._workdir = '/dev/shm/work'
@@ -38,11 +41,11 @@ class AFLWorker(worker.workers.Worker):
         else:
             self._last_bm = bm
 
-        dbm = self._cbn.bitmap.first()
+        dbm = self._cs.bitmap.first()
         if dbm is not None:
             dbm.blob = bm
         else: #except Bitmap.DoesNotExist: #pylint:disable=no-member
-            dbm = Bitmap(blob=bm, cbn=self._cbn)
+            dbm = Bitmap(blob=bm, cs=self._cs)
         dbm.save()
 
     def _check_test(self, t):
@@ -52,7 +55,7 @@ class AFLWorker(worker.workers.Worker):
         LOG.info("Got test of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        t = Test.create(cbn=self._cbn, job=self._job, blob=t, drilled=False)
+        t = Test.create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _check_crash(self, t):
         if t in self._seen: return
@@ -61,19 +64,26 @@ class AFLWorker(worker.workers.Worker):
         LOG.info("Got crash of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        try:
-            pc, crash_kind = rex.Crash.quick_triage(self._cbn.path, t)
-        except Exception as e:  # pylint: disable=broad-except
-            LOG.error("Received a %s exception, shouldn't happen", str(e))
-            crash_kind = None
 
-        if crash_kind is None:
-            LOG.error("Encountered crash_kind of None, this shouldn't happen")
-            LOG.error("Binary: %s", self._cbn.path)
-            LOG.error("Crash: %s", t.encode('hex'))
-            return
+        # FIXME need good default values for multicbs
+        pc = 0
+        crash_kind = 'unclassified'
+        if not self._cs.is_multi_cbn:
+            # quick triaging can only be done on single CBs for now
+            cbn = self._cbn_paths[0]
+            try:
+                pc, crash_kind = rex.Crash.quick_triage(cbn, t)
+            except Exception as e:  # pylint: disable=broad-except
+                LOG.error("Received a %s exception, shouldn't happen", str(e))
+                crash_kind = None
 
-        Crash.create(cbn=self._cbn, job=self._job, blob=t, drilled=False, kind=crash_kind, crash_pc=pc)
+            if crash_kind is None:
+                LOG.error("Encountered crash_kind of None, this shouldn't happen")
+                LOG.error("Challenge: %s", cbn)
+                LOG.error("Crash: %s", t.encode('hex'))
+                return
+
+        Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False, kind=crash_kind, crash_pc=pc)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
@@ -82,7 +92,7 @@ class AFLWorker(worker.workers.Worker):
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time)
                          .join(Job)
-                         .where((Job.cbn == self._cbn) & (self._job.id != Job.id)))
+                         .where((Job.cs == self._cs) & (self._job.id != Job.id)))
 
         if new_tests:
             blobs = [str(t.blob) for t in new_tests]
@@ -91,7 +101,7 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
-    def _spawn_fuzzer(self):
+    def _spawn_singlecb_fuzzer(self, path):
         add_extender = False
         cores = self._job.limit_cpu
 
@@ -100,31 +110,45 @@ class AFLWorker(worker.workers.Worker):
             cores -= 1
             add_extender = True
 
-        self._fuzzer = fuzzer.Fuzzer(self._cbn.path, self._workdir, cores, seeds=self._seen,
+        fzzr = fuzzer.Fuzzer(path, self._workdir, cores, seeds=self._seen,
                                      create_dictionary=True)
 
         if add_extender:
-            if not self._fuzzer.add_extension('extender'):
+            if not fzzr.add_extension('extender'):
                 LOG.warning("Unable to spin-up the extender, using a normal AFL instance instead")
-                self._fuzzer.add_fuzzer()
+                fzzr.add_fuzzer()
+
+        return fzzr
+
+    def _spawn_multicb_fuzzer(self, paths):
+
+        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, seeds=self._seen,
+                                    create_dictionary=True)
+
+    def _spawn_fuzzer(self):
+
+        if self._cs.is_multi_cbn:
+            LOG.info("Challenge is a multicb, spinning up multiafl")
+            self._fuzzer = self._spawn_multicb_fuzzer(self._cbn_paths)
+        else:
+            LOG.info("Challenge is a single cb, spinning up afl")
+            self._fuzzer = self._spawn_singlecb_fuzzer(self._cbn_paths[0])
 
     def _start(self, job):
         """Run AFL with the specified number of cores."""
-        self._job = job
-        self._cbn = job.cbn
         self._timeout = job.limit_time
 
-        # first, get the seeds we currently have, for the entire CB, not just for this binary
-        all_tests = list(self._cbn.tests)
+        # first, get the seeds we currently have, for the entire CS
+        all_tests = list(self._cs.tests)
         if all_tests:
             self._seen.update(str(t.blob) for t in all_tests)
 
         LOG.info("Initializing fuzzer stats")
-        fs = FuzzerStat.create(cbn=self._cbn)
+        fs = FuzzerStat.create(cs=self._cs)
 
         self._spawn_fuzzer()
 
-        LOG.info("Created fuzzer for cbn %s", job.cbn.id)
+        LOG.info("Created fuzzer for cs %s", job.cs.name)
         self._fuzzer.start()
         for _ in range(15):
             if self._fuzzer.alive:
@@ -160,6 +184,7 @@ class AFLWorker(worker.workers.Worker):
                 LOG.debug("... synced %d new testcases!", n)
 
     def _run(self, job):
+        self._cbn_paths = map(lambda cbn: cbn.path, self._cs.cbns_original)
         try:
             self._start(job)
         finally:

@@ -22,25 +22,27 @@ class PovFuzzer2Worker(worker.workers.Worker):
         Runs PovFuzzer on the crashing testcase.
         """
 
-        # TODO: handle the possibility of a job submitting a PoV, rex already supports this
+        assert not self._cs.is_multi_cbn, "PovFuzzer2 can only be run on single CBs for now"
+
         crashing_test = job.input_crash
 
-        LOG.info("Pov fuzzer 2 beginning to exploit crash %d for cbn %d", crashing_test.id, self._cbn.id)
+        LOG.info("Pov fuzzer 2 beginning to exploit crash %d for challenge %s", crashing_test.id, self._cs.name)
 
         pov_fuzzer = rex.pov_fuzzing.Type2CrashFuzzer(self._cbn.path, crash=str(crashing_test.blob))
 
         if pov_fuzzer.exploitable():
-            Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
+            Exploit.create(cs=self._cs, job=self._job, pov_type='type1',
                            exploitation_method="type1fuzzer",
+                           c_code=pov_fuzzer.dump_c(),
                            blob=pov_fuzzer.dump_binary())
-            LOG.info("crash was able to be exploited")
+            LOG.info("Crash was able to be exploited")
         else:
             LOG.warning("Not exploitable")
 
         if pov_fuzzer.dumpable():
             # FIXME: we probably want to store it in a different table with custom attrs
-            Test.create(cbn=self._cbn, job=self._job, blob=pov_fuzzer.get_leaking_payload())
-            LOG.info("possible leaking test was created")
+            Test.create(cs=self._cs, job=self._job, blob=pov_fuzzer.get_leaking_payload())
+            LOG.info("Possible leaking test was created")
         else:
             LOG.warning("Couldn't even dump a leaking input")
 

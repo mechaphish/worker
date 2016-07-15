@@ -21,7 +21,7 @@ class FunctionIdentifierWorker(worker.workers.Worker):
 
     def _run(self, job):
 
-        # TODO enfore time limit
+        assert not self._cs.is_multi_cbn, "FunctionIdentifier can only be scheduled for single CBs"
 
         project = angr.Project(self._cbn.path)
         LOG.info("Inititalizing Identifier")
@@ -31,7 +31,7 @@ class FunctionIdentifierWorker(worker.workers.Worker):
 
         for addr, symbol in idfer.run():
             LOG.debug("Identified %s at %#x", symbol, addr)
-            FunctionIdentity.create(cbn=self._cbn, address=addr, symbol=symbol)
+            FunctionIdentity.create(cs=self._cs, address=addr, symbol=symbol)
 
         LOG.debug("Idenitified a total of %d functions", len(idfer.matches))
-        LOG.info("Done identifying functions for challenge %s", self._cbn.name)
+        LOG.info("Done identifying functions for challenge %s", self._cs.name)

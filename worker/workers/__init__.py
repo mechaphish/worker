@@ -27,29 +27,29 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.log = worker.log.LOG.getChild('cachemanager')
-        self.cbn = None
+        self.cs = None
 
     def cache_lookup(self):
         # Might better be a property?
-        if self.cbn is not None:
+        if self.cs is not None:
             rdata = None
             try:
-                cached = TracerCache.get(TracerCache.cbn == self.cbn)
-                self.log.info("Loaded tracer state from cache for %s", self.cbn.name)
+                cached = TracerCache.get(TracerCache.cs == self.cs)
+                self.log.info("Loaded tracer state from cache for %s", self.cs.name)
                 return pickle.loads(str(cached.blob))
             except TracerCache.DoesNotExist:
-                self.log.debug("No cached states found for %s", self.cbn.name)
+                self.log.debug("No cached states found for %s", self.cs.name)
         else:
-            self.log.warning("cachemanager's cbn was never set, no cache to retrieve")
+            self.log.warning("cachemanager's cs was never set, no cache to retrieve")
 
     def cacher(self, simstate):
-        if self.cbn is not None:
+        if self.cs is not None:
             cache_data = self._prepare_cache_data(simstate)
             if cache_data is not None:
-                self.log.info("Caching tracer state for challenge %s", self.cbn.name)
-                TracerCache.create(cbn=self.cbn, blob=cache_data)
+                self.log.info("Caching tracer state for challenge %s", self.cs.name)
+                TracerCache.create(cs=self.cs, blob=cache_data)
         else:
-            self.log.warning("ChallengeBinaryNode was never set by 'set_cbn' cannot cache")
+            self.log.warning("ChallengeSet was never initialized  cannot cache")
 
 
 class Worker(object):
@@ -61,15 +61,20 @@ class Worker(object):
 
         self._job = None
         self._cbn = None
+        self._cs = None
 
     def _run(self, job):
         raise NotImplementedError("Worker must implement _run(self, job)")
 
     def run(self, job):
-        # Set up job, cbn, and tracer cache
+        # Set up job, cs, cbn, and tracer cache
         self._job = job
+        self._cs = job.cs
         self._cbn = job.cbn
-        self.tracer_cache.cbn = self._cbn
+        self.tracer_cache.cs = self._cs
+
+        if self._cbn is None and not job.cs.is_multi_cbn:
+            self._cbn = self._cs.cbns_original[0]
 
         self._run(job)
 

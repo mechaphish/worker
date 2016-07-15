@@ -22,10 +22,11 @@ class PovFuzzer1Worker(worker.workers.Worker):
         Runs PovFuzzer on the crashing testcase.
         """
 
-        # TODO: handle the possibility of a job submitting a PoV, rex already supports this
+        assert not self._cs.is_multi_cbn, "PovFuzzer1 can only be scheduled on single CBs for now"
+
         crashing_test = job.input_crash
 
-        LOG.info("Pov fuzzer 1 beginning to exploit crash %d for cbn %d", crashing_test.id, self._cbn.id)
+        LOG.info("Pov fuzzer 1 beginning to exploit crash %d for challenge %s", crashing_test.id, self._cs.name)
 
         pov_fuzzer = rex.pov_fuzzing.Type1CrashFuzzer(self._cbn.path, crash=str(crashing_test.blob))
 
@@ -34,8 +35,9 @@ class PovFuzzer1Worker(worker.workers.Worker):
 
         LOG.info("crash was able to be exploited")
 
-        Exploit.create(cbn=self._cbn, job=self._job, pov_type='type1',
+        Exploit.create(cs=self._cs, job=self._job, pov_type='type1',
                        exploitation_method="type1fuzzer",
+                       c_code=pov_fuzzer.dump_c(),
                        blob=pov_fuzzer.dump_binary())
 
     def _run(self, job):
