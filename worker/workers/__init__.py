@@ -118,7 +118,7 @@ class VMWorker(Worker):
             stdout, stderr = kvm_process.communicate(timeout=self._kvm_timeout)
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             LOG.error("VM did not start within %s seconds, killing it", self._kvm_timeout)
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
@@ -153,7 +153,7 @@ class VMWorker(Worker):
         self.ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         try:
             self.ssh.connect("127.0.0.1", port=self._ssh_port, username=self._ssh_username,
-                            key_filename=self._ssh_keyfile, timeout=self._ssh_timeout)
+                             key_filename=self._ssh_keyfile, timeout=self._ssh_timeout)
             # also raises BadHostKeyException, should be taken care of via AutoAddPolicy()
             # also raises AuthenticationException, should never occur because keys are provisioned
         except socket.error as e:
