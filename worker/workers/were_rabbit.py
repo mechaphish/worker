@@ -24,12 +24,15 @@ class WereRabbitWorker(AFLWorker):
 
     def _start(self, job):
         """Run Were Rabbit crash explorer."""
+
+        assert not self._cs.is_multi_cbn, "WereRabbit should only be scheduled single CBs"
+
         self._timeout = job.limit_time
 
         # first, get the crahes we have currently discovered, these will be used
         # to seed the crash explorer
         LOG.info("Gathering all found crashes")
-        all_crashes = list(self._cbn.crashes)
+        all_crashes = list(self._cs.crashes)
         if len(all_crashes) > 0:
             self._seen.update(str(c.blob) for c in all_crashes)
         else:
@@ -65,10 +68,3 @@ class WereRabbitWorker(AFLWorker):
             LOG.debug("Syncing new testcases...")
             n = self._sync_new_tests()
             LOG.debug("... synced %d new testcases!", n)
-
-    def _run(self, job):
-        try:
-            self._start(job)
-        finally:
-            if self._fuzzer is not None:
-                self._fuzzer.kill()

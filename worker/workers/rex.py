@@ -32,10 +32,10 @@ class RexWorker(worker.workers.Worker):
         LOG.info("Adding %s type %d", exploit.method_name, exploit.cgc_type)
         type_name = 'type%d' % exploit.cgc_type
 
-        exploit = Exploit.create(cbn=self._cbn, job=self._job, pov_type=type_name,
+        exploit = Exploit.create(cs=self._cs, job=self._job, pov_type=type_name,
                                  method=exploit.method_name, blob=exploit.dump_binary(),
                                  c_code=exploit.dump_c())
-        self._cbn.save()
+
         return exploit
 
     def forge_ahead(self, crash):
@@ -47,7 +47,7 @@ class RexWorker(worker.workers.Worker):
                     # colorguard will trace this later
                     flag_leak = crash.point_to_flag()
 
-                    Test.create(cbn=self._cbn, job=self._job, blob=flag_leak)
+                    Test.create(cs=self._cs, job=self._job, blob=flag_leak)
                 except rex.CannotExploit:
                     LOG.warning("Crash was an arbitrary-read"
                     "but was unable to point read at flag page")
@@ -59,7 +59,7 @@ class RexWorker(worker.workers.Worker):
 
             # upload the new testcase
             # FIXME: we probably want to store it in a different table with custom attrs
-            Test.create(cbn=self._cbn, job=self._job, blob=open("/tmp/new-testcase").read())
+            Test.create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
 
         return crash
 
@@ -77,15 +77,17 @@ class RexWorker(worker.workers.Worker):
         """Run rex on the crashing testcase."""
         crashing_test = job.input_crash
 
+        assert not self._cs.is_multi_cbn, "Rex can only be run on single cb challenge sets"
+
         try:
-            cached_blob = str(RopCache.get(RopCache.cbn == self._cbn).blob)
+            cached_blob = str(RopCache.get(RopCache.cs == self._cs).blob)
             cached = pickle.loads(cached_blob)
             LOG.info("Got a rop cache")
         except RopCache.DoesNotExist:
             cached = None
             LOG.info("No rop cache available")
 
-        LOG.info("Rex beginning to triage crash %d for cbn %s", crashing_test.id, self._cbn.name)
+        LOG.info("Rex beginning to triage crash %d for cs %s", crashing_test.id, self._cs.name)
 
         use_rop = cached is not None
         crash = rex.Crash(self._cbn.path, str(crashing_test.blob), use_rop=use_rop, rop_cache_tuple=cached)
