@@ -3,6 +3,7 @@ farnsworth
 fuzzer
 identifier
 network_poll_creator
+patch_performance
 patcherex
 paramiko
 python-dotenv==0.3.0
