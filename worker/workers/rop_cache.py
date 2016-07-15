@@ -24,6 +24,7 @@ class RopCacheWorker(worker.workers.Worker):
         """Create a rop cache"""
 
         # make angrop cache
+        LOG.info('Creating Rop Cache for challenge %s', self._cs.name)
         proj = angr.Project(self._cbn.path)
         rop = proj.analyses.ROP()
         rop.find_gadgets_single_threaded()
