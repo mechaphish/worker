@@ -127,11 +127,11 @@ class VMWorker(Worker):
             LOG.error("VM did not start within %s seconds, killing it", self._kvm_timeout)
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
-            kvm_process.kill()
+            kvm_process.terminate()
 
             LOG.warning("5 seconds grace period before forcefully killing VM")
             time.sleep(5)
-            kvm_process.terminate()
+            kvm_process.kill()
             raise EnvironmentError("KVM start did not boot up properly")
 
         LOG.debug("Waiting for SSH to become available from worker")
@@ -184,7 +184,7 @@ class VMWorker(Worker):
 
         LOG.debug("Worker finished, cleaning up SSH connection and VM")
         self.ssh.close()
-        kvm_process.terminate()
+        kvm_process.kill()
 
     def run(self, job):
         try:
