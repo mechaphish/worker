@@ -190,6 +190,11 @@ class VMWorker(Worker):
     def _initialize_ssh_connection(self):
         LOG.debug("Connecting to the VM via SSH")
         self.ssh = paramiko.client.SSHClient()
+
+        # Set TCP Keep-Alive to 5 seconds, so that the connection does not die
+        transport = self.ssh.get_transport()
+        transport.set_keepalive(5)
+
         self.ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         try:
             self.ssh.connect("127.0.0.1", port=self._ssh_port, username=self._ssh_username,
