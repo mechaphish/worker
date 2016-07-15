@@ -18,16 +18,12 @@ class PovFuzzer2Worker(worker.workers.Worker):
         self._crash = None
 
     def _start(self, job):
-        """
-        Runs PovFuzzer on the crashing testcase.
-        """
-
+        """Runs PovFuzzer on the crashing testcase."""
         assert not self._cs.is_multi_cbn, "PovFuzzer2 can only be run on single CBs for now"
 
         crashing_test = job.input_crash
 
         LOG.info("Pov fuzzer 2 beginning to exploit crash %d for challenge %s", crashing_test.id, self._cs.name)
-
         pov_fuzzer = rex.pov_fuzzing.Type2CrashFuzzer(self._cbn.path, crash=str(crashing_test.blob))
 
         if pov_fuzzer.exploitable():

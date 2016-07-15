@@ -4,6 +4,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
+import logging
 import time
 
 from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat, Job, Test)
@@ -14,8 +15,8 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('afl')
 LOG.setLevel('DEBUG')
 
-import logging
 logging.getLogger("fuzzer").setLevel("DEBUG")
+
 
 class AFLWorker(worker.workers.Worker):
     def __init__(self):
@@ -121,9 +122,8 @@ class AFLWorker(worker.workers.Worker):
         return fzzr
 
     def _spawn_multicb_fuzzer(self, paths):
-
         return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, seeds=self._seen,
-                                    create_dictionary=True)
+                             create_dictionary=True)
 
     def _spawn_fuzzer(self):
 

@@ -22,7 +22,6 @@ class CacheWorker(worker.workers.Worker):
 
     def _run(self, job):
         """Create a cache"""
-
         assert not job.cs.is_multi_cbn, "CacheWorker scheduled on multicb, this should NOT happen"
 
         # Run until the first receive
