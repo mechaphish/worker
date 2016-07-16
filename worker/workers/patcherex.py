@@ -24,12 +24,13 @@ class PatcherexWorker(worker.workers.Worker):
         patched_bin, ids_rule = pm.create_one_patch(patch_type)
 
         name = "{}_patched_{}".format(job.cbn.name, patch_type)
+        ids = IDSRule.get_by_sha256_or_create(rules=ids_rules, cs=job.cbn.cs)
         ChallengeBinaryNode.create(
             root=job.cbn,
             cs=job.cbn.cs,
             name=name,
             patch_type=patch_type,
             blob=patch,
-            sha256=hashlib.sha256(patch).hexdigest()
+            sha256=hashlib.sha256(patch).hexdigest(),
+            ids_rule=ids,
         )
-        # TODO add ids rule
