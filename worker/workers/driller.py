@@ -37,7 +37,7 @@ class DrillerWorker(worker.workers.Worker):
         LOG.info("Hooked up %d addresses to simprocedures", len(hooks))
 
         self._driller = driller.Driller(self._cbn.path, job.input_test.blob,
-                                        self._cbn.bitmap.first().blob, 'tag',
+                                        self._cs.bitmap.first().blob, 'tag',
                                         hooks=hooks)
 
         for _, t in self._driller.drill_generator():
