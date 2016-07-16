@@ -19,17 +19,17 @@ class PatcherexWorker(worker.workers.Worker):
 
     def _run(self, job):
         input_file = job.cbn.path
+        patch_type = job.payload["patch_type"]
         pm = PatchMaster(input_file)
-        patches = pm.run(return_dict=True)
+        patched_bin, ids_rule = pm.create_one_patch(patch_type)
 
-        for patch_type, (patch, ids) in patches.items():
-            # FIXME: handle IDS
-            name = "{}_patched_{}".format(job.cbn.name, patch_type)
-            ChallengeBinaryNode.create(
-                root=job.cbn,
-                cs=job.cbn.cs,
-                name=name,
-                patch_type=patch_type,
-                blob=patch,
-                sha256=hashlib.sha256(patch).hexdigest()
-            )
+        name = "{}_patched_{}".format(job.cbn.name, patch_type)
+        ChallengeBinaryNode.create(
+            root=job.cbn,
+            cs=job.cbn.cs,
+            name=name,
+            patch_type=patch_type,
+            blob=patch,
+            sha256=hashlib.sha256(patch).hexdigest()
+        )
+        # TODO add ids rule
