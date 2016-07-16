@@ -13,8 +13,9 @@ import worker.settings
 from farnsworth.models import (to_job_type, Job, AFLJob, CacheJob,
                                ColorGuardJob, DrillerJob, FunctionIdentifierJob,
                                IDSJob, NetworkPollCreatorJob, PatcherexJob,
-                               PovFuzzer1Job, PovFuzzer2Job, RexJob,
-                               RopCacheJob, WereRabbitJob, TesterJob)
+                               PatchPerformanceJob, PovFuzzer1Job,
+                               PovFuzzer2Job, RexJob, RopCacheJob,
+                               WereRabbitJob, TesterJob)
 
 from .workers.afl import AFLWorker
 from .workers.cache import CacheWorker
@@ -24,6 +25,7 @@ from .workers.function_identifier import FunctionIdentifierWorker
 from .workers.ids import IDSWorker
 from .workers.network_poll_creator import NetworkPollCreatorWorker
 from .workers.patcherex import PatcherexWorker
+from .workers.patch_performance import PatchPerformanceWorker
 from .workers.pov_fuzzer1 import PovFuzzer1Worker
 from .workers.pov_fuzzer2 import PovFuzzer2Worker
 from .workers.rex import RexWorker
@@ -61,6 +63,8 @@ class Executor(object):
                     self.work = NetworkPollCreatorWorker()
                 elif isinstance(self.job, PatcherexJob):
                     self.work = PatcherexWorker()
+                elif isinstance(self.job, PatchPerformanceJob):
+                    self.work = PatchPerformanceWorker()
                 elif isinstance(self.job, PovFuzzer1Job):
                     self.work = PovFuzzer1Worker()
                 elif isinstance(self.job, PovFuzzer2Job):
