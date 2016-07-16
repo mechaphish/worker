@@ -138,7 +138,7 @@ class VMWorker(Worker):
                        "-netdev", netdev,
                        "-net", "nic,netdev=fakenet0,model=virtio",
                        "-daemonize",
-                       "-pidfile", pidfile.name,
+                       "-pidfile", self._vm_pidfile.name,
                        "-vnc", "none"]
         try:
             kvm_process = subprocess.Popen(kvm_command, stdout=subprocess.PIPE,
