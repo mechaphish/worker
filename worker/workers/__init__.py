@@ -221,7 +221,8 @@ class VMWorker(Worker):
         try:
             _, stdout, stderr = self.ssh.exec_command("ip r add default via 172.16.6.2")
             exit_status = stdout.channel.recv_exit_status()
-            raise paramiko.SSHException("ip r add exited with %d", exit_status)
+            if exit_status != 0:
+                raise paramiko.SSHException("ip r add exited with %d", exit_status)
         except paramiko.SSHException as e:
             LOG.error("Unable to setup routes on host: %s", e)
             LOG.debug("stdout: %s", stdout.read())
