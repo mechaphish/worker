@@ -4,8 +4,11 @@
 from __future__ import absolute_import, unicode_literals
 
 import contextlib
+import os
 import pickle
+import signal
 import socket
+import tempfile
 import time
 
 import paramiko
@@ -94,13 +97,37 @@ class VMWorker(Worker):
         self._ssh_timeout = ssh_timeout
         self._ssh_username = ssh_username
         self._vm_name = vm_name if vm_name is not None else "cgc"
+        self._vm_pidfile = None
 
-    @contextlib.contextmanager
-    def vm(self):
+    def __del__(self):
+        """Clean-up method for VMWorker.
+
+        The VMWorker spawns up a VM that might still be running when the
+        worker is garbage-collected, which is something that we should
+        clean up. If the VM is running, try to kill it, at best effort.
+        """
+        if self._vm_pidfile is not None:
+            if self.vm_pid is not None:
+                os.kill(self.vm_pid, signal.SIGKILL)
+            self._vm_pidfile.close()
+
+    @property
+    def vm_pid(self):  # locally bound to pidfile file handle
+        self._vm_pidfile.seek(0)
+        pid_ = self._vm_pidfile.read()
+        if pid_:
+            return int(pid_)
+
+    def _bootup_vm(self):
+        """Boot up the VM as, internal helper funtion.
+
+        Note that it opens temporarily file as self._vm_pidfile.
+        """
         LOG.debug("Spawning up VM to run jobs within")
         drive = "file={0._disk},media=disk,discard=unmap,snapshot={0._snapshot},if=virtio".format(self)
         netdev = ("user,id=fakenet0,net=172.16.6.0/24,restrict={0._restrict_net},"
                   "hostfwd=tcp:127.0.0.1:{0._ssh_port}-:22,").format(self)
+        self._vm_pidfile = tempfile.NamedTemporaryFile(mode='r', prefix="worker-vm", suffix="pid")
 
         kvm_command = ["kvm", "-name", self._vm_name,
                        "-sandbox", self._sandbox,
@@ -111,6 +138,7 @@ class VMWorker(Worker):
                        "-netdev", netdev,
                        "-net", "nic,netdev=fakenet0,model=virtio",
                        "-daemonize",
+                       "-pidfile", self._vm_pidfile.name,
                        "-vnc", "none"]
         try:
             kvm_process = subprocess.Popen(kvm_command, stdout=subprocess.PIPE,
@@ -128,12 +156,18 @@ class VMWorker(Worker):
             LOG.debug("stdout: %s", stdout)
             LOG.debug("stderr: %s", stderr)
             kvm_process.terminate()
+            if self.vm_pid is not None:
+                os.kill(self.vm_pid, signal.SIGTERM)
 
             LOG.warning("5 seconds grace period before forcefully killing VM")
             time.sleep(5)
             kvm_process.kill()
+            if self.vm_pid is not None:
+                os.kill(self.vm_pid, signal.SIGKILL)
+
             raise EnvironmentError("KVM start did not boot up properly")
 
+    def _wait_for_ssh(self):
         LOG.debug("Waiting for SSH to become available from worker")
         not_reachable = True
         try:
@@ -153,12 +187,17 @@ class VMWorker(Worker):
             LOG.debug("stderr: %s", stderr)
             raise EnvironmentError("SSH did not become available")
 
+    def _initialize_ssh_connection(self):
         LOG.debug("Connecting to the VM via SSH")
         self.ssh = paramiko.client.SSHClient()
+
         self.ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         try:
             self.ssh.connect("127.0.0.1", port=self._ssh_port, username=self._ssh_username,
                              key_filename=self._ssh_keyfile, timeout=self._ssh_timeout)
+            # Set TCP Keep-Alive to 5 seconds, so that the connection does not die
+            transport = self.ssh.get_transport()
+            transport.set_keepalive(5)
             # also raises BadHostKeyException, should be taken care of via AutoAddPolicy()
             # also raises AuthenticationException, should never occur because keys are provisioned
         except socket.error as e:
@@ -172,11 +211,22 @@ class VMWorker(Worker):
             LOG.debug("stderr: %s", stderr)
             raise e
 
+    @contextlib.contextmanager
+    def vm(self):
+        self._bootup_vm()
+        self._wait_for_ssh()
+        self._initialize_ssh_connection()
+
         LOG.debug("Setting up route to database etc.")
         try:
-            self.ssh.exec_command("ip r add default via 172.16.6.2")
+            _, stdout, stderr = self.ssh.exec_command("ip r add default via 172.16.6.2")
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                raise paramiko.SSHException("ip r add exited with %d", exit_status)
         except paramiko.SSHException as e:
             LOG.error("Unable to setup routes on host: %s", e)
+            LOG.debug("stdout: %s", stdout.read())
+            LOG.debug("stderr: %s", stderr.read())
             raise e
 
         LOG.debug("Passing control over to the Worker")
@@ -184,7 +234,13 @@ class VMWorker(Worker):
 
         LOG.debug("Worker finished, cleaning up SSH connection and VM")
         self.ssh.close()
-        kvm_process.kill()
+        if self.vm_pid is not None:
+            # We do not care about the state of the VM anymore, and can -9 it instead of -15
+            os.kill(self.vm_pid, signal.SIGKILL)
+        self._vm_pidfile.close()
+
+        # If not set to None, deconstructor will try to kill the VM and remove the file
+        self._vm_pidfile = None
 
     def run(self, job):
         try:
