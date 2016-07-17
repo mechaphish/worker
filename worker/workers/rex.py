@@ -14,7 +14,7 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
 
-logging.getLogger('rex').setLevel('INFO')
+logging.getLogger('rex').setLevel('DEBUG')
 
 
 class RexWorker(worker.workers.Worker):
@@ -38,19 +38,21 @@ class RexWorker(worker.workers.Worker):
 
         return exploit
 
+    def craft_leaks(self, crash):
+        if not crash.leakable():
+            LOG.error("Attempted to leak from a crash which cannot be leveraged for leaking")
+            return
+
+        try:
+            for flag_leak in crash.point_to_flag():
+                LOG.debug("Dumping possible leaking input to tests")
+                Test.create(cs=self._cs, job=self._job, blob=flag_leak)
+        except rex.CannotExploit:
+            LOG.warning("Crash was leakable"
+                    "but was unable to point read at flag page")
+
     def forge_ahead(self, crash):
         while crash.explorable():
-            # dump a point-to-flag input
-            if crash.crash_type in [rex.Vulnerability.ARBITRARY_READ]:
-                try:
-                    # attempt to create a testcase which will leak the flag
-                    # colorguard will trace this later
-                    flag_leak = crash.point_to_flag()
-
-                    Test.create(cs=self._cs, job=self._job, blob=flag_leak)
-                except rex.CannotExploit:
-                    LOG.warning("Crash was an arbitrary-read"
-                    "but was unable to point read at flag page")
 
             LOG.info("Exploring crash in hopes of getting something more valuable")
 
@@ -60,6 +62,10 @@ class RexWorker(worker.workers.Worker):
             # upload the new testcase
             # FIXME: we probably want to store it in a different table with custom attrs
             Test.create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
+
+            # dump a point-to-flag input if it's leakable
+            if crash.leakable:
+                self.craft_leaks(crash)
 
         return crash
 
@@ -105,18 +111,21 @@ class RexWorker(worker.workers.Worker):
 
         try:
             # maybe we need to do some exploring first
+            if forge_ahead_crash.leakable():
+                self.craft_leaks(forge_ahead_crash)
+
             if forge_ahead_crash.explorable():
                 forge_ahead_crash = self.forge_ahead(forge_ahead_crash)
 
             if forge_ahead_crash.exploitable():
                 self.exploit_crash(forge_ahead_crash)
 
-        except (rex.CannotExploit, rex.NonCrashingInput) as e:
+        except (rex.CannotExplore, rex.CannotExploit, rex.NonCrashingInput) as e:
             LOG.warning("Crash was not explorable using the forge-ahead method")
             LOG.error("Encountered error %s (%s)", e, e.message)
 
         # use explore-for-exploit
-        if crash.crash_type in [rex.Vulnerability.WRITE_WHAT_WHERE, rex.Vulnerability.WRITE_X_WHERE]:
+        if crash.one_of([rex.Vulnerability.WRITE_WHAT_WHERE, rex.Vulnerability.WRITE_X_WHERE]):
             self.exploit_crash(crash)
 
     def _run(self, job):
