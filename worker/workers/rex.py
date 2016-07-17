@@ -4,10 +4,10 @@
 from __future__ import unicode_literals, absolute_import
 
 import logging
+import pickle
 
 from farnsworth.models import Test, Exploit, RopCache
 import rex
-import pickle
 import tracer
 
 import worker.workers
@@ -48,12 +48,10 @@ class RexWorker(worker.workers.Worker):
                 LOG.debug("Dumping possible leaking input to tests")
                 Test.create(cs=self._cs, job=self._job, blob=flag_leak)
         except rex.CannotExploit:
-            LOG.warning("Crash was leakable"
-                    "but was unable to point read at flag page")
+            LOG.warning("Crash was leakable but was unable to point read at flag page")
 
     def forge_ahead(self, crash):
         while crash.explorable():
-
             # simultaneously explore and dump the new input into a file
             crash.explore("/tmp/new-testcase")
 
