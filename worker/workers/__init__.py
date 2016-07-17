@@ -191,14 +191,13 @@ class VMWorker(Worker):
         LOG.debug("Connecting to the VM via SSH")
         self.ssh = paramiko.client.SSHClient()
 
-        # Set TCP Keep-Alive to 5 seconds, so that the connection does not die
-        transport = self.ssh.get_transport()
-        transport.set_keepalive(5)
-
         self.ssh.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
         try:
             self.ssh.connect("127.0.0.1", port=self._ssh_port, username=self._ssh_username,
                              key_filename=self._ssh_keyfile, timeout=self._ssh_timeout)
+            # Set TCP Keep-Alive to 5 seconds, so that the connection does not die
+            transport = self.ssh.get_transport()
+            transport.set_keepalive(5)
             # also raises BadHostKeyException, should be taken care of via AutoAddPolicy()
             # also raises AuthenticationException, should never occur because keys are provisioned
         except socket.error as e:
