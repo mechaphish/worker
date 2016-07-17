@@ -139,7 +139,7 @@ class AFLWorker(worker.workers.Worker):
         self._timeout = job.limit_time
 
         # first, get the seeds we currently have, for the entire CS
-        all_tests = list(self._cs.tests)
+        all_tests = list(self._cs.tests.join(Job).where(Job.worker != 'rex'))
         if all_tests:
             self._seen.update(str(t.blob) for t in all_tests)
 
