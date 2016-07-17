@@ -211,7 +211,7 @@ class VMWorker(Worker):
             LOG.debug("stderr: %s", stderr)
             raise e
 
-    def exec(self, command):
+    def execute(self, command):
         assert self.ssh is not None
 
         environment = " ".join("{}='{}'".format(k, v) for k, v in os.environ.items()
@@ -229,7 +229,6 @@ class VMWorker(Worker):
             LOG.debug("stderr: %s", stderr.read())
             raise e
 
-
     @contextlib.contextmanager
     def vm(self):
         self._bootup_vm()
@@ -237,7 +236,7 @@ class VMWorker(Worker):
         self._initialize_ssh_connection()
 
         LOG.debug("Setting up route to database etc.")
-        self.exec("ip r add default via 172.16.6.2")
+        self.execute("ip r add default via 172.16.6.2")
 
         LOG.debug("Passing control over to the Worker")
         yield
