@@ -114,7 +114,7 @@ class VMWorker(Worker):
     @property
     def vm_pid(self):  # locally bound to pidfile file handle
         self._vm_pidfile.seek(0)
-        pid_ = self._vm.pidfile.read()
+        pid_ = self._vm_pidfile.read()
         if pid_:
             return int(pid_)
 
