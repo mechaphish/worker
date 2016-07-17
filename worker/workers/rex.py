@@ -14,7 +14,7 @@ import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
 
-logging.getLogger('rex').setLevel('DEBUG')
+logging.getLogger('rex').setLevel('INFO')
 
 
 class RexWorker(worker.workers.Worker):
