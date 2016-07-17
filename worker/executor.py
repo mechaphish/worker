@@ -5,7 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 import time
 
-import timeout_decorator
+import stopit
 
 # Import settings before everything else
 import worker.settings
@@ -92,12 +92,10 @@ class Executor(object):
         self.job.started()
 
         if self.job.limit_time is not None:
-            @timeout_decorator.timeout(self.job.limit_time, use_signals=True)
-            def _timeout_run():
-                self.work.run(self.job)
             try:
-                _timeout_run()
-            except timeout_decorator.TimeoutError:
+                with stopit.SignalTimeout(self.job.limit_time, swallow_exc=False):
+                    self.work.run(self.job)
+            except stopit.TimeoutException:
                 print "[Worker] Job execution timeout!"
         else:
             self.work.run(self.job)
