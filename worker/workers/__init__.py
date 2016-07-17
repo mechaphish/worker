@@ -224,8 +224,8 @@ class VMWorker(Worker):
             raise paramiko.SSHException("ip r add exited with %d", exit_status)
         except paramiko.SSHException as e:
             LOG.error("Unable to setup routes on host: %s", e)
-            LOG.debug("stdout: %s", stdout)
-            LOG.debug("stderr: %s", stderr)
+            LOG.debug("stdout: %s", stdout.read())
+            LOG.debug("stderr: %s", stderr.read())
             raise e
 
         LOG.debug("Passing control over to the Worker")
