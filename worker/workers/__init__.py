@@ -234,9 +234,9 @@ class VMWorker(Worker):
 
         LOG.debug("Worker finished, cleaning up SSH connection and VM")
         self.ssh.close()
-        if self.pid_vm is not None:
+        if self.vm_pid() is not None:
             # We do not care about the state of the VM anymore, and can -9 it instead of -15
-            os.kill(self.pid_vm, signal.SIGKILL)
+            os.kill(self.vm_pid(), signal.SIGKILL)
         self._vm_pidfile.close()
 
         # If not set to None, deconstructor will try to kill the VM and remove the file
