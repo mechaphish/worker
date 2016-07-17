@@ -93,7 +93,7 @@ class Executor(object):
 
         if self.job.limit_time is not None:
             try:
-                with stopit.SignalTimeout(self.job.limit_time, swalloc_exc=False):
+                with stopit.SignalTimeout(self.job.limit_time, swallow_exc=False):
                     self.work.run(self.job)
             except stopit.TimeoutException:
                 print "[Worker] Job execution timeout!"
