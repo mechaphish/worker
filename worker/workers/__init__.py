@@ -216,8 +216,10 @@ class VMWorker(Worker):
 
         environment = " ".join("{}='{}'".format(k, v) for k, v in os.environ.items()
                                if k.startswith("POSTGRES"))
+        env_command = "{} {}".format(environment, command)
+        LOG.debug("Executing command: %s", env_command)
         try:
-            _, stdout, stderr = self.ssh.exec_command("{} {}".format(environment, command))
+            _, stdout, stderr = self.ssh.exec_command(env_command)
             exit_status = stdout.channel.recv_exit_status()
             if exit_status != 0:
                 raise paramiko.SSHException("'%s' failed with exit status %d", command, exit_status)
