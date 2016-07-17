@@ -54,8 +54,6 @@ class RexWorker(worker.workers.Worker):
     def forge_ahead(self, crash):
         while crash.explorable():
 
-            LOG.info("Exploring crash in hopes of getting something more valuable")
-
             # simultaneously explore and dump the new input into a file
             crash.explore("/tmp/new-testcase")
 
@@ -103,7 +101,7 @@ class RexWorker(worker.workers.Worker):
         crashing_test.triaged = True
         crashing_test.save()
 
-        if not crash.exploitable() and not crash.explorable():
+        if not crash.leakable() and not crash.exploitable() and not crash.explorable():
             raise ValueError("Crash was not exploitable or explorable")
 
         # split the crash in case we need to try both explore-for-exploit and forge-ahead
@@ -112,12 +110,15 @@ class RexWorker(worker.workers.Worker):
         try:
             # maybe we need to do some exploring first
             if forge_ahead_crash.leakable():
+                LOG.info("Trying to leverage crash to cause a leak")
                 self.craft_leaks(forge_ahead_crash)
 
             if forge_ahead_crash.explorable():
+                LOG.info("Exploring crash in hopes of getting something more valuable")
                 forge_ahead_crash = self.forge_ahead(forge_ahead_crash)
 
             if forge_ahead_crash.exploitable():
+                LOG.info("Attempting to exploit crash")
                 self.exploit_crash(forge_ahead_crash)
 
         except (rex.CannotExplore, rex.CannotExploit, rex.NonCrashingInput) as e:
