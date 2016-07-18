@@ -131,14 +131,12 @@ class RexWorker(worker.workers.Worker):
 
         # use explore-for-exploit
         if crash.one_of([rex.Vulnerability.WRITE_WHAT_WHERE, rex.Vulnerability.WRITE_X_WHERE]):
-            self.exploit_crash(crash)
+            self.exploit_crash(crashing_test, crash)
 
     def _run(self, job):
         try:
             self._start(job)
         except (rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
-            job.input_crash.explorable = False
-            job.input_crash.exploitable = False
             job.input_crash.save()
             # FIXME: log exception somewhere
             LOG.error(e)
