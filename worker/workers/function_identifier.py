@@ -8,6 +8,7 @@ from __future__ import unicode_literals, absolute_import
 import angr
 from farnsworth.models import FunctionIdentity
 import identifier
+import cPickle as pickle
 
 import worker.workers
 LOG = worker.workers.LOG.getChild('function_identifier')
@@ -27,11 +28,18 @@ class FunctionIdentifierWorker(worker.workers.Worker):
         LOG.info("Inititalizing Identifier")
         idfer = identifier.Identifier(project)
 
-        LOG.info("Identifier initialized running...")
+        LOG.info("Initialized, populating function infos")
+        for f, info in idfer.func_info.items():
+            pd = pickle.dumps(info)
+            FunctionIdentity.create(cs=self._cs, address=f.addr, func_info=pd)
+
+        LOG.info("Now running identifier...")
 
         for addr, symbol in idfer.run():
             LOG.debug("Identified %s at %#x", symbol, addr)
-            FunctionIdentity.create(cs=self._cs, address=addr, symbol=symbol)
+            fi, _  = FunctionIdentity.get_or_create(cs=self._cs, address=addr)
+            fi.symbol = symbol
+            fi.save()
 
         LOG.debug("Idenitified a total of %d functions", len(idfer.matches))
         LOG.info("Done identifying functions for challenge %s", self._cs.name)
