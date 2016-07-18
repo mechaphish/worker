@@ -73,7 +73,7 @@ class RexWorker(worker.workers.Worker):
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit)))
 
-        crashing_test.exploitable = True
+        crashing_test.exploited = True
         crashing_test.save()
 
         # do this in a seperate loop to make sure we don't kill the worker before adding exploits
