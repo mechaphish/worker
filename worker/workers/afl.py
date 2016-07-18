@@ -72,8 +72,11 @@ class AFLWorker(worker.workers.Worker):
         if not self._cs.is_multi_cbn:
             # quick triaging can only be done on single CBs for now
             cbn = self._cbn_paths[0]
+
+            crash_kind = None
             try:
                 qc = rex.QuickCrash(cbn, t)
+                crash_kind = qc.kind
             except Exception as e:  # pylint: disable=broad-except
                 LOG.error("Received a %s exception, shouldn't happen", str(e))
                 crash_kind = None
