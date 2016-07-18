@@ -59,6 +59,9 @@ class RexWorker(worker.workers.Worker):
             # FIXME: we probably want to store it in a different table with custom attrs
             Test.create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
 
+            crash.explored = True
+            crash.save()
+
             # dump a point-to-flag input if it's leakable
             if crash.leakable:
                 self.craft_leaks(crash)
@@ -69,6 +72,9 @@ class RexWorker(worker.workers.Worker):
         e_pairs = [ ]
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit)))
+
+        crash.exploited = True
+        crash.save()
 
         # do this in a seperate loop to make sure we don't kill the worker before adding exploits
         for exploit, e_db in e_pairs:
