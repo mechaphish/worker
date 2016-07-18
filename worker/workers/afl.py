@@ -7,7 +7,7 @@ from datetime import datetime
 import logging
 import time
 
-from farnsworth.models import (Bitmap, ChallengeBinaryNode, Crash, FuzzerStat, Job, Test)
+from farnsworth.models import (Bitmap, Crash, FuzzerStat, Job, Test)
 import fuzzer
 import rex
 
@@ -45,12 +45,13 @@ class AFLWorker(worker.workers.Worker):
         dbm = self._cs.bitmap.first()
         if dbm is not None:
             dbm.blob = bm
-        else: #except Bitmap.DoesNotExist: #pylint:disable=no-member
+        else:   # except Bitmap.DoesNotExist: #pylint:disable=no-member
             dbm = Bitmap(blob=bm, cs=self._cs)
         dbm.save()
 
     def _check_test(self, t):
-        if t in self._seen: return
+        if t in self._seen:
+            return
         self._seen.add(t)
 
         LOG.info("Got test of length %s", len(t))
@@ -59,7 +60,8 @@ class AFLWorker(worker.workers.Worker):
         t = Test.create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _check_crash(self, t):
-        if t in self._seen: return
+        if t in self._seen:
+            return
         self._seen.add(t)
 
         LOG.info("Got crash of length %s", len(t))
@@ -67,13 +69,11 @@ class AFLWorker(worker.workers.Worker):
         self._update_bitmap()
 
         # FIXME need good default values for multicbs
-        pc = 0
-        crash_kind = 'unclassified'
         if not self._cs.is_multi_cbn:
             # quick triaging can only be done on single CBs for now
             cbn = self._cbn_paths[0]
             try:
-                pc, crash_kind = rex.Crash.quick_triage(cbn, t)
+                qc = rex.QuickCrash(cbn, t)
             except Exception as e:  # pylint: disable=broad-except
                 LOG.error("Received a %s exception, shouldn't happen", str(e))
                 crash_kind = None
@@ -84,7 +84,10 @@ class AFLWorker(worker.workers.Worker):
                 LOG.error("Crash: %s", t.encode('hex'))
                 return
 
-        Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False, kind=crash_kind, crash_pc=pc)
+            Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False,
+                         kind=qc.kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
+        else:
+            Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
@@ -112,7 +115,7 @@ class AFLWorker(worker.workers.Worker):
             add_extender = True
 
         fzzr = fuzzer.Fuzzer(path, self._workdir, cores, seeds=self._seen,
-                                     create_dictionary=True)
+                             create_dictionary=True)
 
         if add_extender:
             if not fzzr.add_extension('extender'):
