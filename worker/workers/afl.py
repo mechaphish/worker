@@ -45,12 +45,13 @@ class AFLWorker(worker.workers.Worker):
         dbm = self._cs.bitmap.first()
         if dbm is not None:
             dbm.blob = bm
-        else: #except Bitmap.DoesNotExist: #pylint:disable=no-member
+        else:   # except Bitmap.DoesNotExist: #pylint:disable=no-member
             dbm = Bitmap(blob=bm, cs=self._cs)
         dbm.save()
 
     def _check_test(self, t):
-        if t in self._seen: return
+        if t in self._seen:
+            return
         self._seen.add(t)
 
         LOG.info("Got test of length %s", len(t))
@@ -59,7 +60,8 @@ class AFLWorker(worker.workers.Worker):
         t = Test.create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _check_crash(self, t):
-        if t in self._seen: return
+        if t in self._seen:
+            return
         self._seen.add(t)
 
         LOG.info("Got crash of length %s", len(t))
@@ -83,7 +85,7 @@ class AFLWorker(worker.workers.Worker):
                 return
 
             Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False,
-                    kind=qc.kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
+                         kind=qc.kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
         else:
             Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
@@ -113,7 +115,7 @@ class AFLWorker(worker.workers.Worker):
             add_extender = True
 
         fzzr = fuzzer.Fuzzer(path, self._workdir, cores, seeds=self._seen,
-                                     create_dictionary=True)
+                             create_dictionary=True)
 
         if add_extender:
             if not fzzr.add_extension('extender'):
