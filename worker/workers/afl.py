@@ -79,7 +79,6 @@ class AFLWorker(worker.workers.Worker):
                 crash_kind = qc.kind
             except Exception as e:  # pylint: disable=broad-except
                 LOG.error("Received a %s exception, shouldn't happen", str(e))
-                crash_kind = None
 
             if crash_kind is None:
                 LOG.error("Encountered crash_kind of None, this shouldn't happen")
