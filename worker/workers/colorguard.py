@@ -15,13 +15,16 @@ LOG.setLevel('DEBUG')
 # Let's look at the output of POV testing, because it's been known to have bugs
 logging.getLogger('colorguard').setLevel("DEBUG")
 
-
 class ColorGuardWorker(worker.workers.Worker):
     def __init__(self):
         super(ColorGuardWorker, self).__init__()
         self._seen = set()
         self._colorguard = None
         self._seen = set()
+
+    @staticmethod
+    def _get_pov_score(exploit):
+        return exploit.test_binary(enable_randomness=True, times=10).count(True) / 10.0
 
     def _run(self, job):
         """Run colorguard on a testcase in an attempt to find leaks."""
@@ -37,14 +40,16 @@ class ColorGuardWorker(worker.workers.Worker):
         if exploit is not None:
             LOG.info("Testcase %d causes a leak of the flag page", job.input_test.id)
 
-            if exploit.test_binary():
-                LOG.info("Binary POV passed simulation tests!")
-            else:
-                LOG.error("ColorGuard created POV for Testcase %d, but if failed!", job.input_test.id)
-
-            Exploit.create(cs=self._cs, job=self._job, pov_type="type2",
+            e = Exploit.create(cs=self._cs, job=self._job, pov_type="type2",
                            method=exploit.method_name, blob=exploit.dump_binary(),
                            c_code=exploit.dump_c())
+
+            e.reliability = self._get_pov_score(exploit)
+
+            LOG.info("Binary POV passed %d / 10 simulation tests", e.reliability * 10)
+
+            e.save()
+
         else:
             LOG.debug("Unable to find leak or generate exploit for testcase")
 
