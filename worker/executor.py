@@ -15,7 +15,7 @@ from farnsworth.models import (to_job_type, Job, AFLJob, CacheJob,
                                IDSJob, NetworkPollCreatorJob, PatcherexJob,
                                PatchPerformanceJob, PovFuzzer1Job,
                                PovFuzzer2Job, RexJob, RopCacheJob,
-                               WereRabbitJob, TesterJob)
+                               TesterJob)
 
 from .workers.afl import AFLWorker
 from .workers.cache import CacheWorker
@@ -31,7 +31,6 @@ from .workers.pov_fuzzer2 import PovFuzzer2Worker
 from .workers.rex import RexWorker
 from .workers.rop_cache import RopCacheWorker
 from .workers.tester import TesterWorker
-from .workers.were_rabbit import WereRabbitWorker
 
 
 class Executor(object):
@@ -75,8 +74,6 @@ class Executor(object):
                     self.work = RopCacheWorker()
                 elif isinstance(self.job, TesterJob):
                     self.work = TesterWorker()
-                elif isinstance(self.job, WereRabbitJob):
-                    self.work = WereRabbitWorker()
 
                 self._timed_execution()
                 print "[Worker] Done job #%s" % self.job_id
