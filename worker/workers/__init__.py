@@ -84,8 +84,8 @@ class Worker(object):
 
 class VMWorker(Worker):
     def __init__(self, disk="/data/cgc-vm.qcow2", kvm_timeout=5, restrict_net=False, sandbox=True,
-                 snapshot=True, ssh_port=8022, ssh_username="root", ssh_keyfile="/data/cgc-vm.key",
-                 ssh_timeout=30, vm_name=None):
+                 snapshot=True, ssh_port=8022, ssh_username="root",
+                 ssh_keyfile="/home/angr/.ssh/id_rsa", ssh_timeout=30, vm_name=None):
         super(VMWorker, self).__init__()
         self._disk = disk
         self._kvm_timeout = kvm_timeout
