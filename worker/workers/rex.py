@@ -50,7 +50,7 @@ class RexWorker(worker.workers.Worker):
         except rex.CannotExploit:
             LOG.warning("Crash was leakable but was unable to point read at flag page")
 
-    def forge_ahead(self, crash):
+    def forge_ahead(self, crashing_test, crash):
         while crash.explorable():
             # simultaneously explore and dump the new input into a file
             crash.explore("/tmp/new-testcase")
@@ -59,16 +59,22 @@ class RexWorker(worker.workers.Worker):
             # FIXME: we probably want to store it in a different table with custom attrs
             Test.create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
 
+            crashing_test.explored = True
+            crashing_test.save()
+
             # dump a point-to-flag input if it's leakable
             if crash.leakable:
                 self.craft_leaks(crash)
 
         return crash
 
-    def exploit_crash(self, crash):
+    def exploit_crash(self, crashing_test, crash):
         e_pairs = [ ]
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit)))
+
+        crashing_test.exploited = True
+        crashing_test.save()
 
         # do this in a seperate loop to make sure we don't kill the worker before adding exploits
         for exploit, e_db in e_pairs:
@@ -113,11 +119,11 @@ class RexWorker(worker.workers.Worker):
 
             if forge_ahead_crash.explorable():
                 LOG.info("Exploring crash in hopes of getting something more valuable")
-                forge_ahead_crash = self.forge_ahead(forge_ahead_crash)
+                forge_ahead_crash = self.forge_ahead(crashing_test, forge_ahead_crash)
 
             if forge_ahead_crash.exploitable():
                 LOG.info("Attempting to exploit crash")
-                self.exploit_crash(forge_ahead_crash)
+                self.exploit_crash(crashing_test, forge_ahead_crash)
 
         except (rex.CannotExplore, rex.CannotExploit, rex.NonCrashingInput) as e:
             LOG.warning("Crash was not explorable using the forge-ahead method")
@@ -125,14 +131,12 @@ class RexWorker(worker.workers.Worker):
 
         # use explore-for-exploit
         if crash.one_of([rex.Vulnerability.WRITE_WHAT_WHERE, rex.Vulnerability.WRITE_X_WHERE]):
-            self.exploit_crash(crash)
+            self.exploit_crash(crashing_test, crash)
 
     def _run(self, job):
         try:
             self._start(job)
         except (rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
-            job.input_crash.explorable = False
-            job.input_crash.exploitable = False
             job.input_crash.save()
             # FIXME: log exception somewhere
             LOG.error(e)
