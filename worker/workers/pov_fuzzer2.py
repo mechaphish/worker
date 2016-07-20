@@ -39,7 +39,7 @@ class PovFuzzer2Worker(worker.workers.VMWorker):
 
         if pov_fuzzer.dumpable():
             # FIXME: we probably want to store it in a different table with custom attrs
-            Test.create(cs=self._cs, job=self._job, blob=pov_fuzzer.get_leaking_payload())
+            Test.get_or_create(cs=self._cs, job=self._job, blob=pov_fuzzer.get_leaking_payload())
             LOG.info("Possible leaking test was created")
         else:
             LOG.warning("Couldn't even dump a leaking input")
