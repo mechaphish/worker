@@ -29,7 +29,7 @@ class AFLWorker(worker.workers.Worker):
         self._runtime = 0
         self._timeout = None
         self._last_bm = None
-        self._last_sync_time = datetime.now()
+        self._last_sync_time = datetime.min
 
     def _update_bitmap(self):
         bm = self._fuzzer.bitmap()
@@ -116,8 +116,7 @@ class AFLWorker(worker.workers.Worker):
             cores -= 1
             add_extender = True
 
-        fzzr = fuzzer.Fuzzer(path, self._workdir, cores, seeds=self._seen,
-                             create_dictionary=True)
+        fzzr = fuzzer.Fuzzer(path, self._workdir, cores, create_dictionary=True)
 
         if add_extender:
             if not fzzr.add_extension('extender'):
@@ -127,8 +126,7 @@ class AFLWorker(worker.workers.Worker):
         return fzzr
 
     def _spawn_multicb_fuzzer(self, paths):
-        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, seeds=self._seen,
-                             create_dictionary=True)
+        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, create_dictionary=True)
 
     def _spawn_fuzzer(self):
 
@@ -142,11 +140,6 @@ class AFLWorker(worker.workers.Worker):
     def _start(self, job):
         """Run AFL with the specified number of cores."""
         self._timeout = job.limit_time
-
-        # first, get the seeds we currently have, for the entire CS
-        all_tests = list(self._cs.tests.join(Job).where(Job.worker != 'rex'))
-        if all_tests:
-            self._seen.update(str(t.blob) for t in all_tests)
 
         LOG.info("Initializing fuzzer stats")
         fs = FuzzerStat.create(cs=self._cs)
