@@ -76,8 +76,9 @@ class Worker(object):
         self._cbn = job.cbn
         self.tracer_cache.cs = self._cs
 
-        if self._cbn is None and not job.cs.is_multi_cbn:
-            self._cbn = self._cs.cbns_original[0]
+        if self._cs is not None:
+            if self._cbn is None and not job.cs.is_multi_cbn:
+                self._cbn = self._cs.cbns_original[0]
 
         self._run(job)
 
