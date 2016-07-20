@@ -86,8 +86,8 @@ class AFLWorker(worker.workers.Worker):
                 LOG.error("Crash: %s", t.encode('hex'))
                 return
 
-            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False,
-                         kind=qc.kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False, kind=qc.kind,
+                                crash_pc=qc.crash_pc, bb_count=qc.bb_count)
         else:
             Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
@@ -97,8 +97,8 @@ class AFLWorker(worker.workers.Worker):
 
         # any new tests which come from a different worker which apply to the same binary
         new_tests = list(Test.unsynced_testcases(prev_sync_time)
-                         .join(Job)
-                         .where((Job.cs == self._cs) & (self._job.id != Job.id)))
+                             .join(Job)
+                             .where((Job.cs == self._cs) & (self._job.id != Job.id)))
 
         if new_tests:
             blobs = [str(t.blob) for t in new_tests]
