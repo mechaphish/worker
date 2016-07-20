@@ -86,10 +86,10 @@ class AFLWorker(worker.workers.Worker):
                 LOG.error("Crash: %s", t.encode('hex'))
                 return
 
-            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False, kind=qc.kind,
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, kind=qc.kind,
                                 crash_pc=qc.crash_pc, bb_count=qc.bb_count)
         else:
-            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False)
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=t)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time
