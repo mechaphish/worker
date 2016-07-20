@@ -57,7 +57,7 @@ class AFLWorker(worker.workers.Worker):
         LOG.info("Got test of length %s", len(t))
         self._job.produced_output = True
         self._update_bitmap()
-        t = Test.create(cs=self._cs, job=self._job, blob=t, drilled=False)
+        t, _ = Test.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _check_crash(self, t):
         if t in self._seen:
@@ -86,10 +86,10 @@ class AFLWorker(worker.workers.Worker):
                 LOG.error("Crash: %s", t.encode('hex'))
                 return
 
-            Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False,
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False,
                          kind=qc.kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
         else:
-            Crash.create(cs=self._cs, job=self._job, blob=t, drilled=False)
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=t, drilled=False)
 
     def _sync_new_tests(self):
         prev_sync_time = self._last_sync_time

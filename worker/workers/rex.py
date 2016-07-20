@@ -46,7 +46,7 @@ class RexWorker(worker.workers.Worker):
         try:
             for flag_leak in crash.point_to_flag():
                 LOG.debug("Dumping possible leaking input to tests")
-                Test.create(cs=self._cs, job=self._job, blob=flag_leak)
+                Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
         except rex.CannotExploit:
             LOG.warning("Crash was leakable but was unable to point read at flag page")
 
@@ -57,7 +57,7 @@ class RexWorker(worker.workers.Worker):
 
             # upload the new testcase
             # FIXME: we probably want to store it in a different table with custom attrs
-            Test.create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
+            Test.get_or_create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
 
             crashing_test.explored = True
             crashing_test.save()

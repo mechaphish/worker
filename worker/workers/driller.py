@@ -46,7 +46,7 @@ class DrillerWorker(worker.workers.Worker):
             self._seen.add(t)
 
             LOG.info("Found new testcase (of length %s)!", len(t))
-            Test.create(cs=self._cs, job=self._job, blob=t)
+            Test.get_or_create(cs=self._cs, job=self._job, blob=t)
 
         self._job.input_test.drilled = True
         self._job.input_test.save()
