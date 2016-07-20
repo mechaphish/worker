@@ -184,8 +184,6 @@ class VMWorker(Worker):
                         time.sleep(1)
         except stopit.TimeoutException:
             LOG.error("SSH did not become available within %s seconds.", self._ssh_timeout)
-            LOG.debug("stdout: %s", stdout)
-            LOG.debug("stderr: %s", stderr)
             raise EnvironmentError("SSH did not become available")
 
     def _initialize_ssh_connection(self):
@@ -203,13 +201,9 @@ class VMWorker(Worker):
             # also raises AuthenticationException, should never occur because keys are provisioned
         except socket.error as e:
             LOG.error("TCP error connecting to SSH on VM.")
-            LOG.debug("stdout: %s", stdout)
-            LOG.debug("stderr: %s", stderr)
             raise e
         except paramiko.SSHException as e:
             LOG.error("SSH error trying to connect to VM.")
-            LOG.debug("stdout: %s", stdout)
-            LOG.debug("stderr: %s", stderr)
             raise e
 
     def execute(self, command):
