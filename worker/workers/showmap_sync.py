@@ -23,12 +23,15 @@ class ShowmapSyncWorker(worker.workers.Worker):
         self._round = None
 
     def _sync_poll_to_test(self, poll):
-        if poll in self._seen: return
+        if poll in self._seen:
+            return
+
         Test.get_or_create(cs=self._cs, job=self._job, blob=poll, drilled=False, poll_created=True)
         self._seen.add(poll)
 
     def _sync_poll_to_crash(self, poll):
-        if poll in self._seen: return
+        if poll in self._seen:
+            return
 
         crash_kind = None
         try:
