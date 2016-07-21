@@ -24,6 +24,8 @@ class CacheWorker(worker.workers.Worker):
         """Create a cache"""
         assert not job.cs.is_multi_cbn, "CacheWorker scheduled on multicb, this should NOT happen"
 
+        LOG.debug("Invoking cache worker on challenge %s", self._cs.name)
+
         # Run until the first receive
         tr = tracer.Tracer(self._cbn.path, str(""))
 
