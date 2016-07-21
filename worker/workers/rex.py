@@ -28,13 +28,13 @@ class RexWorker(worker.workers.Worker):
     def _get_pov_score(exploit):
         return exploit.test_binary(enable_randomness=True, times=10).count(True) / 10.0
 
-    def _save_exploit(self, exploit):
+    def _save_exploit(self, exploit, crashing_test):
         LOG.info("Adding %s type %d", exploit.method_name, exploit.cgc_type)
         type_name = 'type%d' % exploit.cgc_type
 
         exploit = Exploit.create(cs=self._cs, job=self._job, pov_type=type_name,
                                  method=exploit.method_name, blob=exploit.dump_binary(),
-                                 c_code=exploit.dump_c())
+                                 c_code=exploit.dump_c(), crash=crashing_test)
 
         return exploit
 
@@ -71,7 +71,7 @@ class RexWorker(worker.workers.Worker):
     def exploit_crash(self, crashing_test, crash):
         e_pairs = [ ]
         for exploit in crash.yield_exploits():
-            e_pairs.append((exploit, self._save_exploit(exploit)))
+            e_pairs.append((exploit, self._save_exploit(exploit, crashing_test)))
 
         crashing_test.exploited = True
         crashing_test.save()
