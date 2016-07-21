@@ -3,13 +3,14 @@
 
 from __future__ import unicode_literals, absolute_import
 
-import fuzzer
 from farnsworth.models import Crash, Round, Test
+import fuzzer
 import rex
 
 import worker.workers
 LOG = worker.workers.LOG.getChild('showmap_sync')
 LOG.setLevel('DEBUG')
+
 
 class ShowmapSyncWorker(worker.workers.Worker):
     """
@@ -34,12 +35,11 @@ class ShowmapSyncWorker(worker.workers.Worker):
             qc = rex.QuickCrash(self._cbn.path, poll)
             crash_kind = qc.kind
         except Exception as e:
-            LOG.error("QuickCrash triaging threw exception '%s' "
-                    "NOT SYNCING", e.message)
+            LOG.error("QuickCrash triaging threw exception '%s' NOT SYNCING", e.message)
 
         if crash_kind is not None:
-            Crash.get_or_create(cs=self._cs, job=self._job, blob=poll,
-                    crash_kind=crash_kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=poll, crash_kind=crash_kind,
+                                crash_pc=qc.crash_pc, bb_count=qc.bb_count)
 
         self._seen.add(poll)
 
@@ -53,12 +53,12 @@ class ShowmapSyncWorker(worker.workers.Worker):
             return
 
         LOG.debug("Invoking Showmap on polls for challenge %s, round #%d", self._cs.name,
-                self._job.input_round.num)
+                  self._job.input_round.num)
 
-        bitmap = "\xff" # default bitmap all unseen
+        bitmap = "\xff"  # Default bitmap all unseen
         if not self._cs.bitmap.exists():
-            LOG.warning("No bitmap found for challenge %s, "
-                "most likely all polls will be considered interesting", self._cs.name)
+            LOG.warning("No bitmap found for challenge %s, most likely all polls will be "
+                        "considered interesting", self._cs.name)
         else:
             bitmap = str(self._cs.bitmap.first().blob)
 
