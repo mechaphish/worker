@@ -34,7 +34,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
             qc = rex.QuickCrash(self._cbn.path, poll)
             crash_kind = qc.kind
         except Exception as e:
-            LOG.error("QuickCrash triaging threw exception '%s'"
+            LOG.error("QuickCrash triaging threw exception '%s' "
                     "NOT SYNCING", e.message)
 
         if crash_kind is not None:
@@ -57,7 +57,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
 
         bitmap = "\xff" # default bitmap all unseen
         if not self._cs.bitmap.exists():
-            LOG.warning("No bitmap found for challenge %s,"
+            LOG.warning("No bitmap found for challenge %s, "
                 "most likely all polls will be considered interesting", self._cs.name)
         else:
             bitmap = str(self._cs.bitmap.first().blob)
