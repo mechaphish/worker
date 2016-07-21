@@ -19,7 +19,6 @@ class ShowmapSyncWorker(worker.workers.Worker):
     def __init__(self):
         super(ShowmapSyncWorker, self).__init__()
         self._seen = set()
-        self._sync_count = 0
         self._round = None
 
     def _sync_poll_to_test(self, poll):
@@ -56,7 +55,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
         LOG.debug("Invoking Showmap on polls for challenge %s, round #%d", self._cs.name,
                 self._job.input_round.num)
 
-        bitmap = "\xff"
+        bitmap = "\xff" # default bitmap all unseen
         if not self._cs.bitmap.exists():
             LOG.warning("No bitmap found for challenge %s,"
                 "most likely all polls will be considered interesting", self._cs.name)
@@ -82,4 +81,4 @@ class ShowmapSyncWorker(worker.workers.Worker):
                         self._sync_poll_to_test(as_test)
                     break
 
-        LOG.info("Synced %d polls into tests", len(self._seen))
+        LOG.info("Synced %d polls", len(self._seen))
