@@ -23,7 +23,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
 
     def _sync_poll_to_test(self, poll):
         if poll in self._seen: return
-        Test.create(cs=self._cs, job=self._job, blob=poll, drilled=False, poll_created=True)
+        Test.get_or_create(cs=self._cs, job=self._job, blob=poll, drilled=False, poll_created=True)
         self._seen.add(poll)
 
     def _sync_poll_to_crash(self, poll):
@@ -38,7 +38,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
                     "NOT SYNCING", e.message)
 
         if crash_kind is not None:
-            Crash.create(cs=self._cs, job=self._job, blob=poll,
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=poll,
                     crash_kind=crash_kind, crash_pc=qc.crash_pc, bb_count=qc.bb_count)
 
         self._seen.add(poll)
