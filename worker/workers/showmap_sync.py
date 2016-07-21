@@ -32,7 +32,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
 
         crash_kind = None
         try:
-            qc = rex.QuickCrash(self._cs.path, poll)
+            qc = rex.QuickCrash(self._cbn.path, poll)
             crash_kind = qc.kind
         except Exception as e:
             LOG.error("QuickCrash triaging threw exception '%s'"
