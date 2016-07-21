@@ -15,7 +15,7 @@ from farnsworth.models import (to_job_type, Job, AFLJob, CacheJob,
                                IDSJob, NetworkPollCreatorJob, PatcherexJob,
                                PatchPerformanceJob, PovFuzzer1Job,
                                PovFuzzer2Job, RexJob, RopCacheJob,
-                               TesterJob)
+                               ShowmapSyncJob, TesterJob)
 
 from .workers.afl import AFLWorker
 from .workers.cache import CacheWorker
@@ -30,6 +30,7 @@ from .workers.pov_fuzzer1 import PovFuzzer1Worker
 from .workers.pov_fuzzer2 import PovFuzzer2Worker
 from .workers.rex import RexWorker
 from .workers.rop_cache import RopCacheWorker
+from .workers.showmap_sync import ShowmapSyncWorker
 from .workers.tester import TesterWorker
 
 
@@ -72,6 +73,8 @@ class Executor(object):
                     self.work = RexWorker()
                 elif isinstance(self.job, RopCacheJob):
                     self.work = RopCacheWorker()
+                elif isinstance(self.job, ShowmapSyncJob):
+                    self.work = ShowmapSyncWorker()
                 elif isinstance(self.job, TesterJob):
                     self.work = TesterWorker()
 
