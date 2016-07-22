@@ -134,7 +134,7 @@ class VMWorker(Worker):
                        "-sandbox", self._sandbox,
                        "-machine", "pc-i440fx-1.7,accel=kvm,usb=off",
                        "-cpu", "SandyBridge",
-                       "-smp", cores,
+                       "-smp", "{}".format(cores),
                        "-m", "{}M".format(memory),
                        "-snapshot",
                        "-drive", drive,
