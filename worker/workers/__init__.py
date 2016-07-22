@@ -119,7 +119,7 @@ class VMWorker(Worker):
         if pid_:
             return int(pid_)
 
-    def _bootup_vm(self):
+    def _bootup_vm(self, cores, memory):
         """Boot up the VM as, internal helper funtion.
 
         Note that it opens temporarily file as self._vm_pidfile.
@@ -134,6 +134,8 @@ class VMWorker(Worker):
                        "-sandbox", self._sandbox,
                        "-machine", "pc-i440fx-1.7,accel=kvm,usb=off",
                        "-cpu", "SandyBridge",
+                       "-smp", cores,
+                       "-m", "{}M".format(memory),
                        "-snapshot",
                        "-drive", drive,
                        "-netdev", netdev,
@@ -225,8 +227,8 @@ class VMWorker(Worker):
             raise e
 
     @contextlib.contextmanager
-    def vm(self):
-        self._bootup_vm()
+    def vm(self, cores, memory):
+        self._bootup_vm(cores, memory)
         self._wait_for_ssh()
         self._initialize_ssh_connection()
 
@@ -248,7 +250,7 @@ class VMWorker(Worker):
 
     def run(self, job):
         try:
-            with self.vm():
+            with self.vm(job.limit_cpu, job.limit_memory):
                 super(VMWorker, self).run(job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)
