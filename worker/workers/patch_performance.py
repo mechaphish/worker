@@ -7,8 +7,8 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
-from patch_performance import compute_patch_performance
 from farnsworth.models import PatchPerformanceJob
+from patch_performance import compute_patch_performance
 
 import worker.workers
 LOG = worker.workers.LOG.getChild('patch_performance')
