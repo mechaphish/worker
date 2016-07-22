@@ -116,7 +116,7 @@ class AFLWorker(worker.workers.Worker):
             cores -= 1
             add_extender = True
 
-        fzzr = fuzzer.Fuzzer(path, self._workdir, cores, create_dictionary=True)
+        fzzr = fuzzer.Fuzzer(path, self._workdir, cores, create_dictionary=True, never_resume=True)
 
         if add_extender:
             if not fzzr.add_extension('extender'):
@@ -126,7 +126,8 @@ class AFLWorker(worker.workers.Worker):
         return fzzr
 
     def _spawn_multicb_fuzzer(self, paths):
-        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, create_dictionary=True)
+        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, create_dictionary=True,
+                             never_resume=True)
 
     def _spawn_fuzzer(self):
 
