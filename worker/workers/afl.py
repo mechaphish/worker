@@ -127,7 +127,7 @@ class AFLWorker(worker.workers.Worker):
 
     def _spawn_multicb_fuzzer(self, paths):
         return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, create_dictionary=True,
-                never_resume=True)
+                             never_resume=True)
 
     def _spawn_fuzzer(self):
 
