@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
+from farnsworth.models import PatchPerformanceJob
 from patch_performance import compute_patch_performance
 
 import worker.workers
@@ -21,7 +22,7 @@ class PatchPerformanceWorker(worker.workers.Worker):
         super(self.__class__, self).__init__()
 
     def _run(self, job):
-        assert isinstance(job, PatchPerformanceWorker)
+        assert isinstance(job, PatchPerformanceJob)
 
         target_cs = job.cs
         if target_cs is not None:
