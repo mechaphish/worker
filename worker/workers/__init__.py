@@ -27,18 +27,18 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
     This class manages tracer caches for a given worker. Under-the-hood tracer
     will call into this code to both load and store caches.
     """
-    def __init__(self):
+    def __init__(self, concrete_flag=False):
         super(self.__class__, self).__init__()
         self.log = worker.log.LOG.getChild('cachemanager')
         self.cs = None
+        self.concrete_flag = concrete_flag
 
     def cache_lookup(self):
         # Might better be a property?
         if self.cs is not None:
-            rdata = None
             try:
-                cached = TracerCache.get(TracerCache.cs == self.cs)
-                self.log.info("Loaded tracer state from cache for %s", self.cs.name)
+                cached = TracerCache.get(TracerCache.cs == self.cs, TracerCache.concrete_flag == self.concrete_flag)
+                self.log.debug("Loaded tracer state from cache for %s", self.cs.name)
                 return pickle.loads(str(cached.blob))
             except TracerCache.DoesNotExist:
                 self.log.debug("No cached states found for %s", self.cs.name)
@@ -50,7 +50,7 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
             cache_data = self._prepare_cache_data(simstate)
             if cache_data is not None:
                 self.log.info("Caching tracer state for challenge %s", self.cs.name)
-                TracerCache.create(cs=self.cs, blob=cache_data)
+                TracerCache.create(cs=self.cs, blob=cache_data, concrete_flag=self.concrete_flag)
         else:
             self.log.warning("ChallengeSet was never initialized  cannot cache")
 

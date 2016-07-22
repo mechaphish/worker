@@ -6,7 +6,9 @@ from __future__ import absolute_import, unicode_literals
 import driller
 from farnsworth.models import Test
 from simuvex.procedures import SimProcedures
+import tracer
 
+from . import CRSTracerCacheManager
 import worker.workers
 LOG = worker.workers.LOG.getChild('driller')
 LOG.setLevel('INFO')
@@ -21,6 +23,9 @@ class DrillerWorker(worker.workers.Worker):
         super(DrillerWorker, self).__init__()
         self._seen = set()
         self._driller = None
+        # fix the cache manager
+        self.tracer_cache = CRSTracerCacheManager(concrete_flag=True)
+        tracer.tracer.GlobalCacheManager = self.tracer_cache
 
     def _run(self, job):
         """Drill a testcase."""
