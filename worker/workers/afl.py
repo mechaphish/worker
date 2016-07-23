@@ -109,9 +109,9 @@ class AFLWorker(worker.workers.Worker):
 
     def _spawn_singlecb_fuzzer(self, path):
         add_extender = False
-        cores = self._job.limit_cpu
+        cores = self._job.request_cpu
 
-        if self._job.limit_cpu >= 4:
+        if self._job.request_cpu >= 4:
             LOG.debug("4 or more cores specified, dedicating one to the extender")
             cores -= 1
             add_extender = True
@@ -126,7 +126,7 @@ class AFLWorker(worker.workers.Worker):
         return fzzr
 
     def _spawn_multicb_fuzzer(self, paths):
-        return fuzzer.Fuzzer(paths, self._workdir, self._job.limit_cpu, create_dictionary=True,
+        return fuzzer.Fuzzer(paths, self._workdir, self._job.request_cpu , create_dictionary=True,
                              never_resume=True)
 
     def _spawn_fuzzer(self):
