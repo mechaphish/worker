@@ -250,7 +250,7 @@ class VMWorker(Worker):
 
     def run(self, job):
         try:
-            with self.vm(job.limit_cpu, job.limit_memory):
+            with self.vm(job.limit_cpu, job.limit_memory - 512):
                 super(VMWorker, self).run(job)
         except EnvironmentError as e:
             LOG.error("Error preparing VM for execution: %s", e)
