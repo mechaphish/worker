@@ -18,7 +18,7 @@ from farnsworth.models import (to_job_type, Job, AFLJob, BackdoorSubmitterJob,
                                ShowmapSyncJob, TesterJob)
 
 from .workers.afl import AFLWorker
-from .workers.backdoor import BackdoorSubmitterWorker
+from .workers.backdoor_submitter import BackdoorSubmitterWorker
 from .workers.cache import CacheWorker
 from .workers.colorguard import ColorGuardWorker
 from .workers.driller import DrillerWorker

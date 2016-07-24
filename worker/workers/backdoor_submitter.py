@@ -7,8 +7,9 @@ from patcherex import patch_master
 from farnsworth.models import Exploit
 
 import worker.workers
-LOG = worker.workers.LOG.getChild('backdoor')
+LOG = worker.workers.LOG.getChild('backdoor_submitter')
 LOG.setLevel('INFO')
+
 
 class BackdoorSubmitterWorker(worker.workers.Worker):
 
@@ -19,8 +20,6 @@ class BackdoorSubmitterWorker(worker.workers.Worker):
         """Submit a backdoor POV"""
 
         LOG.debug("Submitting backdoor for challenge %s", self._cs.name)
-
         backdoor_blob = str(patch_master.get_backdoorpov())
-
         Exploit.create(cs=self._cs, job=self._job, pov_type='type1',
                        method='backdoor', blob=backdoor_blob, reliability=0)
