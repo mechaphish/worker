@@ -19,5 +19,10 @@ class TesterWorker(worker.workers.VMWorker):
         job_type = job.payload['type']
         cs_id = job.cs.id
         to_execute_command = "common_tester {} {} {}".format(cs_id, job_type, TesterWorker.MAX_NUM_JOBS)
-        self.execute(to_execute_command)
+        LOG.debug("Trying to run VMWorker for CS %s and type %s", cs_id, job_type)
+        LOG.debug("Executing: %s", to_execute_command)
+        stdout_cont, stderr_cont = self.execute(to_execute_command)
+        LOG.debug("stdout=%s", stdout_cont)
+        LOG.debug("stderr=%s", stderr_cont)
+
 
