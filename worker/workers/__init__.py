@@ -16,6 +16,7 @@ import stopit
 import subprocess32 as subprocess
 import tracer
 from farnsworth.models import TracerCache, ChallengeBinaryNode
+from rex.trace_additions import FormatInfoIntToStr, FormatInfoStrToInt, FormatInfoDontConstrain
 
 import worker.log
 LOG = worker.log.LOG.getChild('workers')
@@ -27,17 +28,19 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
     This class manages tracer caches for a given worker. Under-the-hood tracer
     will call into this code to both load and store caches.
     """
-    def __init__(self, concrete_flag=False):
+    def __init__(self, concrete_flag=False, atoi_flag=False):
         super(self.__class__, self).__init__()
         self.log = worker.log.LOG.getChild('cachemanager')
         self.cs = None
         self.concrete_flag = concrete_flag
+        self.atoi_flag = atoi_flag
 
     def cache_lookup(self):
         # Might better be a property?
         if self.cs is not None:
             try:
-                cached = TracerCache.get(TracerCache.cs == self.cs, TracerCache.concrete_flag == self.concrete_flag)
+                cached = TracerCache.get(TracerCache.cs == self.cs, TracerCache.concrete_flag == self.concrete_flag,
+                                         TracerCache.atoi_flag == self.atoi_flag)
                 self.log.debug("Loaded tracer state from cache for %s", self.cs.name)
                 return pickle.loads(str(cached.blob))
             except TracerCache.DoesNotExist:
@@ -50,9 +53,56 @@ class CRSTracerCacheManager(tracer.cachemanager.CacheManager):
             cache_data = self._prepare_cache_data(simstate)
             if cache_data is not None:
                 self.log.info("Caching tracer state for challenge %s", self.cs.name)
-                TracerCache.create(cs=self.cs, blob=cache_data, concrete_flag=self.concrete_flag)
+                TracerCache.create(cs=self.cs, blob=cache_data, concrete_flag=self.concrete_flag,
+                                   atoi_flag=self.atoi_flag)
         else:
             self.log.warning("ChallengeSet was never initialized  cannot cache")
+
+
+class AtoiManager(object):
+    """AtoiManager
+
+    This class provides utilities for parsing symbols to atoi infos
+    for use in workers such as Rex
+    """
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def symbol_to_format_info(addr, symbol):
+        # picks the correct format info from a symbol
+        if symbol.startswith("atoi"):
+            allows_negative = "_no_signs" not in symbol
+            return FormatInfoStrToInt(addr, symbol, str_arg_num=0, base=10,
+                                      base_arg=None, allows_negative=allows_negative)
+        if symbol.startswith("based_atoi"):
+            allows_negative = "signed" in symbol
+            return FormatInfoStrToInt(addr, symbol, str_arg_num=0, base=int(symbol.split("_")[-1]),
+                                      base_arg=None, allows_negative=allows_negative)
+        if symbol == "int2str" or symbol == "uint2str":
+            return FormatInfoIntToStr(addr, symbol, int_arg_num=2, str_dst_num=0, base=10, base_arg=None)
+        if symbol == "int2str_v2" or symbol == "uint2str_v2":
+            return FormatInfoIntToStr(addr, symbol, int_arg_num=0, str_dst_num=1, base=10, base_arg=None)
+        if symbol == "int2str_v3" or symbol == "uint2str_v3":
+            return FormatInfoIntToStr(addr, symbol, int_arg_num=1, str_dst_num=0, base=10, base_arg=None)
+        if symbol.startswith("strtol"):
+            return FormatInfoStrToInt(addr, symbol, str_arg_num=0, base=None, base_arg=2,
+                                      allows_negative=True)
+        if symbol == "printf":
+            return FormatInfoDontConstrain(addr, symbol, check_symbolic_arg=0)
+        if symbol == "fdprintf":
+            return FormatInfoDontConstrain(addr, symbol, check_symbolic_arg=1)
+        return None
+
+    @staticmethod
+    def get_atoi_info(symbols):
+        # gets the list of atoi infos for a dictionary of symbols
+        infos = []
+        for addr, symbol in symbols.items():
+            atoi_info = AtoiManager.symbol_to_format_info(addr, symbol)
+            if atoi_info is not None:
+                infos.append(atoi_info)
+        return infos
 
 
 class Worker(object):
