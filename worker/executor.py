@@ -10,14 +10,15 @@ import stopit
 # Import settings before everything else
 import worker.settings
 
-from farnsworth.models import (to_job_type, Job, AFLJob, CacheJob,
-                               ColorGuardJob, DrillerJob, FunctionIdentifierJob,
-                               IDSJob, NetworkPollCreatorJob, PatcherexJob,
-                               PatchPerformanceJob, PovFuzzer1Job,
+from farnsworth.models import (to_job_type, Job, AFLJob, BackdoorSubmitterJob,
+                               CacheJob, ColorGuardJob, DrillerJob,
+                               FunctionIdentifierJob, IDSJob, NetworkPollCreatorJob,
+                               PatcherexJob, PatchPerformanceJob, PovFuzzer1Job,
                                PovFuzzer2Job, RexJob, RopCacheJob,
                                ShowmapSyncJob, TesterJob)
 
 from .workers.afl import AFLWorker
+from .workers.backdoor_submitter import BackdoorSubmitterWorker
 from .workers.cache import CacheWorker
 from .workers.colorguard import ColorGuardWorker
 from .workers.driller import DrillerWorker
@@ -49,6 +50,8 @@ class Executor(object):
                                                                self.job.__class__.__name__)
                 if isinstance(self.job, AFLJob):
                     self.work = AFLWorker()
+                elif isinstance(self.job, BackdoorSubmitterJob):
+                    self.work = BackdoorSubmitterWorker()
                 elif isinstance(self.job, CacheJob):
                     self.work = CacheWorker()
                 elif isinstance(self.job, ColorGuardJob):
