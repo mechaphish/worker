@@ -48,7 +48,7 @@ class RexWorker(worker.workers.Worker):
             for flag_leak in crash.point_to_flag():
                 LOG.debug("Dumping possible leaking input to tests")
                 test, _ = Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
-                LOG.debug("test id %d", test.id)
+                LOG.debug("New flag leaking test id %d", test.id)
         except rex.CannotExploit:
             LOG.warning("Crash was leakable but was unable to point read at flag page")
 
@@ -107,7 +107,7 @@ class RexWorker(worker.workers.Worker):
                 LOG.info("hooking %#x, %s", a.addr, a.func_name)
             LOG.info("Hooked up %d atoi infos", len(atoi_infos))
         else:
-            LOG.info("no atoi infos")
+            LOG.debug("No atoi infos found")
 
         LOG.info("Rex beginning to triage crash %d for cs %s", crashing_test.id, self._cs.name)
 
