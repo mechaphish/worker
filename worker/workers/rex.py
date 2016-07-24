@@ -10,6 +10,7 @@ from farnsworth.models import Test, Exploit, RopCache
 import rex
 import tracer
 
+from . import CRSTracerCacheManager
 import worker.workers
 LOG = worker.workers.LOG.getChild('rex')
 LOG.setLevel('DEBUG')
@@ -46,7 +47,8 @@ class RexWorker(worker.workers.Worker):
         try:
             for flag_leak in crash.point_to_flag():
                 LOG.debug("Dumping possible leaking input to tests")
-                Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
+                test, _ = Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
+                LOG.debug("test id %d", test.id)
         except rex.CannotExploit:
             LOG.warning("Crash was leakable but was unable to point read at flag page")
 
@@ -95,10 +97,23 @@ class RexWorker(worker.workers.Worker):
             cached = None
             LOG.info("No rop cache available")
 
+        # Hook up atoi stuff
+        atoi_infos = worker.workers.AtoiManager.get_atoi_info(self._cs.symbols)
+        if len(atoi_infos) > 0:
+            self.tracer_cache = CRSTracerCacheManager(atoi_flag=True)
+            self.tracer_cache.cs = self._cs
+            tracer.tracer.GlobalCacheManager = self.tracer_cache
+            for a in atoi_infos:
+                LOG.info("hooking %#x, %s", a.addr, a.func_name)
+            LOG.info("Hooked up %d atoi infos", len(atoi_infos))
+        else:
+            LOG.info("no atoi infos")
+
         LOG.info("Rex beginning to triage crash %d for cs %s", crashing_test.id, self._cs.name)
 
         use_rop = cached is not None
-        crash = rex.Crash(self._cbn.path, str(crashing_test.blob), use_rop=use_rop, rop_cache_tuple=cached)
+        crash = rex.Crash(self._cbn.path, str(crashing_test.blob), use_rop=use_rop,
+                          rop_cache_tuple=cached, format_infos=atoi_infos)
         self._crash = crash
 
         # let everyone know this crash has been traced

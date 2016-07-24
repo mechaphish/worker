@@ -17,7 +17,7 @@ import logging
 logging.getLogger("driller").setLevel("INFO")
 
 class DrillerWorker(worker.workers.Worker):
-    DONT_HOOK = ["malloc", "free", "realloc", "printf", "snprintf"]
+    DONT_HOOK = ["malloc", "free", "realloc", "printf", "snprintf", "memset"]
 
     def __init__(self):
         super(DrillerWorker, self).__init__()
