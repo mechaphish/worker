@@ -21,6 +21,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
         super(ShowmapSyncWorker, self).__init__()
         self._seen = set()
         self._round = None
+        self._cbn_p = None
 
     def _sync_poll_to_test(self, poll):
         if poll in self._seen:
@@ -35,13 +36,13 @@ class ShowmapSyncWorker(worker.workers.Worker):
 
         crash_kind = None
         try:
-            qc = rex.QuickCrash(self._cbn.path, poll)
+            qc = rex.QuickCrash(self._cbn_p, poll)
             crash_kind = qc.kind
         except Exception as e:
             LOG.error("QuickCrash triaging threw exception '%s' NOT SYNCING", e.message)
 
         if crash_kind is not None:
-            Crash.get_or_create(cs=self._cs, job=self._job, blob=poll, crash_kind=crash_kind,
+            Crash.get_or_create(cs=self._cs, job=self._job, blob=poll, kind=crash_kind,
                                 crash_pc=qc.crash_pc, bb_count=qc.bb_count)
 
         self._seen.add(poll)
@@ -50,10 +51,6 @@ class ShowmapSyncWorker(worker.workers.Worker):
         """Run Showmap on all polls in a round and sync them into Tests if they're new"""
 
         self._round = self._job.input_round
-
-        if self._cs.is_multi_cbn:
-            LOG.warning("Showmap scheduled on multicb, this is not yet supported")
-            return
 
         LOG.debug("Invoking Showmap on polls for challenge %s, round #%d", self._cs.name,
                   self._job.input_round.num)
@@ -65,13 +62,18 @@ class ShowmapSyncWorker(worker.workers.Worker):
         else:
             bitmap = str(self._cs.bitmap.first().blob)
 
+        if self._cs.is_multi_cbn:
+            self._cbn_p = [c.path for c in self._cs.cbns_original]
+        else:
+            self._cbn_p = self._cbn.path
+
         for poll in self._cs.raw_round_polls.join(Round).where(Round.id == self._round.id):
 
             as_test = str(poll.from_xml_to_test())
             if len(as_test) == 0:
                 continue
 
-            smap = fuzzer.Showmap(self._cbn.path, as_test)
+            smap = fuzzer.Showmap(self._cbn_p, as_test)
             shownmap = smap.showmap()
 
             for k in shownmap:
