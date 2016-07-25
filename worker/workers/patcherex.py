@@ -5,7 +5,7 @@ from __future__ import unicode_literals, absolute_import
 
 import hashlib
 
-from farnsworth.models import ChallengeBinaryNode, IDSRule
+from farnsworth.models import ChallengeBinaryNode, IDSRule, PatchType
 from patcherex.patch_master import PatchMaster
 
 import worker.workers
@@ -25,11 +25,12 @@ class PatcherexWorker(worker.workers.Worker):
 
         name = "{}_patched_{}".format(job.cbn.name, patch_type)
         ids = IDSRule.get_by_sha256_or_create(rules=ids_rule, cs=job.cbn.cs)
+        pt = PatchType.get(name=patch_type)
         ChallengeBinaryNode.create(
             root=job.cbn,
             cs=job.cbn.cs,
             name=name,
-            patch_type=patch_type,
+            patch_type=pt,
             blob=patched_bin,
             sha256=hashlib.sha256(patched_bin).hexdigest(),
             ids_rule=ids,
