@@ -122,10 +122,6 @@ class RexWorker(worker.workers.Worker):
                           rop_cache_tuple=cached, format_infos=atoi_infos)
         self._crash = crash
 
-        # let everyone know this crash has been traced
-        crashing_test.triaged = True
-        crashing_test.save()
-
         if not crash.leakable() and not crash.exploitable() and not crash.explorable():
             raise ValueError("Crash was not exploitable or explorable")
 
@@ -161,3 +157,7 @@ class RexWorker(worker.workers.Worker):
             job.input_crash.save()
             # FIXME: log exception somewhere
             LOG.error(e)
+        finally:
+            # let everyone know this crash has been traced
+            job._input_crash.triaged = True
+            job._input_crash.save()
