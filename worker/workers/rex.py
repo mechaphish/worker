@@ -47,8 +47,9 @@ class RexWorker(worker.workers.Worker):
         try:
             for flag_leak in crash.point_to_flag():
                 LOG.debug("Dumping possible leaking input to tests")
-                test, _ = Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
-                LOG.debug("New flag leaking test id %d", test.id)
+                test, created = Test.get_or_create(cs=self._cs, job=self._job, blob=flag_leak)
+                if created:
+                    LOG.debug("New flag leaking test id %d", test.id)
         except rex.CannotExploit:
             LOG.warning("Crash was leakable but was unable to point read at flag page")
 
