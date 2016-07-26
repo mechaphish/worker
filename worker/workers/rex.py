@@ -78,6 +78,11 @@ class RexWorker(worker.workers.Worker):
         crashing_test.exploited = True
         crashing_test.save()
 
+        # safety loop, make sure we don't throw-away working exploits because of memory issues
+        for exploit, e_db in e_pairs:
+            e_db.reliability = 0.1 if exploit.test_binary() else 0.0
+            e_db.save()
+
         # do this in a seperate loop to make sure we don't kill the worker before adding exploits
         for exploit, e_db in e_pairs:
             e_db.reliability = self._get_pov_score(exploit)
