@@ -107,6 +107,17 @@ class AFLWorker(worker.workers.Worker):
 
         return len(new_tests)
 
+    def _startup_sync(self):
+        new_tests = list(Test.unsynced_testcases(self._last_sync_time)
+                             .where(Test.cs == self._cs))
+
+        if new_tests:
+            blobs = [str(t.blob) for t in new_tests]
+            self._seen.update(blobs)
+            self._fuzzer.pollenate(blobs)
+
+        return len(new_tests)
+
     def _spawn_singlecb_fuzzer(self, path):
         add_extender = False
         cores = self._job.request_cpu
@@ -157,6 +168,11 @@ class AFLWorker(worker.workers.Worker):
             raise Exception("Fuzzer failed to start")
 
         LOG.info("Started fuzzer")
+
+        LOG.info("Doing a startup sync...")
+        new_tests = self._startup_sync()
+        if new_tests:
+            LOG.info("... got %d new tests from startup sync", new_tests)
 
         while self._timeout is None or self._runtime < self._timeout:
             time.sleep(5)
