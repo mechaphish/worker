@@ -91,7 +91,7 @@ class RexWorker(worker.workers.Worker):
             e_db.save()
 
         # do we need to retrace without atoi hookups?
-        if all([e.reliability == 0 for _, e in e_pairs]):
+        if all([e.reliability == 0 for _, e in e_pairs]) and self._needs_retrace:
             self._needs_retrace = False
 
             self.tracer_cache = CRSTracerCacheManager(atoi_flag=False)
