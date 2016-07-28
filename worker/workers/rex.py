@@ -24,6 +24,8 @@ class RexWorker(worker.workers.Worker):
         super(RexWorker, self).__init__()
         self._exploits = None
         self._crash = None
+        self._crashing_test = None
+        self._needs_retrace = False
 
     @staticmethod
     def _get_pov_score(exploit):
@@ -59,7 +61,6 @@ class RexWorker(worker.workers.Worker):
             crash.explore("/tmp/new-testcase")
 
             # upload the new testcase
-            # FIXME: we probably want to store it in a different table with custom attrs
             Test.get_or_create(cs=self._cs, job=self._job, blob=open("/tmp/new-testcase").read())
 
             crashing_test.explored = True
@@ -72,7 +73,7 @@ class RexWorker(worker.workers.Worker):
         return crash
 
     def exploit_crash(self, crashing_test, crash):
-        e_pairs = [ ]
+        e_pairs = []
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit, crashing_test)))
 
@@ -89,23 +90,24 @@ class RexWorker(worker.workers.Worker):
             e_db.reliability = self._get_pov_score(exploit)
             e_db.save()
 
-    def _start(self, job):
+        # do we need to retrace without atoi hookups?
+        if all([e.reliability == 0 for _, e in e_pairs]) and self._needs_retrace:
+            self._needs_retrace = False
+
+            self.tracer_cache = CRSTracerCacheManager(atoi_flag=False)
+            self.tracer_cache.cs = self._cs
+            tracer.tracer.GlobalCacheManager = self.tracer_cache
+
+            LOG.warning("Exploit had 0 reliability with formated atoi info, rerunning without atoi info")
+            self._run_rex()
+
+    def _get_atoi_infos(self):
         """Run rex on the crashing testcase."""
-        crashing_test = job.input_crash
-
-        assert not self._cs.is_multi_cbn, "Rex can only be run on single cb challenge sets"
-
-        try:
-            cached_blob = str(RopCache.get(RopCache.cs == self._cs).blob)
-            cached = pickle.loads(cached_blob)
-            LOG.info("Got a rop cache")
-        except RopCache.DoesNotExist:
-            cached = None
-            LOG.info("No rop cache available")
 
         # Hook up atoi stuff
         atoi_infos = worker.workers.AtoiManager.get_atoi_info(self._cs.symbols)
         if len(atoi_infos) > 0:
+            self._needs_retrace = True
             self.tracer_cache = CRSTracerCacheManager(atoi_flag=True)
             self.tracer_cache.cs = self._cs
             tracer.tracer.GlobalCacheManager = self.tracer_cache
@@ -115,10 +117,22 @@ class RexWorker(worker.workers.Worker):
         else:
             LOG.debug("No atoi infos found")
 
-        LOG.info("Rex beginning to triage crash %d for cs %s", crashing_test.id, self._cs.name)
+        return atoi_infos
+
+    def _run_rex(self, atoi_infos=None):
+
+        LOG.info("Rex beginning to triage crash %d for cs %s", self._crashing_test.id, self._cs.name)
+
+        try:
+            cached_blob = str(RopCache.get(RopCache.cs == self._cs).blob)
+            cached = pickle.loads(cached_blob)
+            LOG.info("Got a rop cache")
+        except RopCache.DoesNotExist:
+            cached = None
+            LOG.info("No rop cache available")
 
         use_rop = cached is not None
-        crash = rex.Crash(self._cbn.path, str(crashing_test.blob), use_rop=use_rop,
+        crash = rex.Crash(self._cbn.path, str(self._crashing_test.blob), use_rop=use_rop,
                           rop_cache_tuple=cached, format_infos=atoi_infos)
         self._crash = crash
 
@@ -136,11 +150,11 @@ class RexWorker(worker.workers.Worker):
 
             if forge_ahead_crash.explorable():
                 LOG.info("Exploring crash in hopes of getting something more valuable")
-                forge_ahead_crash = self.forge_ahead(crashing_test, forge_ahead_crash)
+                forge_ahead_crash = self.forge_ahead(self._crashing_test, forge_ahead_crash)
 
             if forge_ahead_crash.exploitable():
                 LOG.info("Attempting to exploit crash")
-                self.exploit_crash(crashing_test, forge_ahead_crash)
+                self.exploit_crash(self._crashing_test, forge_ahead_crash)
 
         except (rex.CannotExplore, rex.CannotExploit, rex.NonCrashingInput) as e:
             LOG.warning("Crash was not explorable using the forge-ahead method")
@@ -148,14 +162,22 @@ class RexWorker(worker.workers.Worker):
 
         # use explore-for-exploit
         if crash.one_of([rex.Vulnerability.WRITE_WHAT_WHERE, rex.Vulnerability.WRITE_X_WHERE]):
-            self.exploit_crash(crashing_test, crash)
+            self.exploit_crash(self._crashing_test, crash)
+
+    def _start(self):
+        atoi_infos = self._get_atoi_infos()
+        if len(atoi_infos) == 0:
+            atoi_infos = None
+        self._run_rex(atoi_infos=atoi_infos)
 
     def _run(self, job):
+        self._crashing_test = job.input_crash
+        assert not self._cs.is_multi_cbn, "Rex can only be run on single cb challenge sets"
+
         try:
-            self._start(job)
+            self._start()
         except (rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
             job.input_crash.save()
-            # FIXME: log exception somewhere
             LOG.error(e)
         finally:
             # let everyone know this crash has been traced
