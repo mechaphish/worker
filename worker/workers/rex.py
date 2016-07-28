@@ -73,7 +73,7 @@ class RexWorker(worker.workers.Worker):
         return crash
 
     def exploit_crash(self, crashing_test, crash):
-        e_pairs = [ ]
+        e_pairs = []
         for exploit in crash.yield_exploits():
             e_pairs.append((exploit, self._save_exploit(exploit, crashing_test)))
 
@@ -165,18 +165,13 @@ class RexWorker(worker.workers.Worker):
             self.exploit_crash(self._crashing_test, crash)
 
     def _start(self):
-
         atoi_infos = self._get_atoi_infos()
-
         if len(atoi_infos) == 0:
             atoi_infos = None
-
         self._run_rex(atoi_infos=atoi_infos)
 
     def _run(self, job):
-
         self._crashing_test = job.input_crash
-
         assert not self._cs.is_multi_cbn, "Rex can only be run on single cb challenge sets"
 
         try:
