@@ -10,7 +10,7 @@ LOG.setLevel('DEBUG')
 
 class TesterWorker(worker.workers.VMWorker):
     # maximum number of jobs that need to be run by the VM
-    MAX_NUM_JOBS = 1000
+    MAX_NUM_JOBS = 250
 
     def __init__(self):
         super(self.__class__, self).__init__()
