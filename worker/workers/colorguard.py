@@ -22,7 +22,6 @@ class ColorGuardWorker(worker.workers.Worker):
         super(ColorGuardWorker, self).__init__()
         self._seen = set()
         self._colorguard = None
-        self._seen = set()
 
     @staticmethod
     def _get_pov_score(exploit):
@@ -35,12 +34,12 @@ class ColorGuardWorker(worker.workers.Worker):
             LOG.warning("Colorguard scheduled on multicb, this is not yet supported")
             return
 
-        LOG.debug("Invoking colorguard on challenge %s, testcase %s", self._cs.name, job.input_test.id)
-        self._colorguard = colorguard.ColorGuard(self._cbn.path, str(job.input_test.blob))
+        LOG.debug("Invoking colorguard on challenge %s, job %s", self._cs.name, job.id)
+        self._colorguard = colorguard.ColorGuard(self._cbn.path, str(job.input_blob))
 
         exploit = self._colorguard.attempt_exploit()
         if exploit is not None:
-            LOG.info("Testcase %d causes a leak of the flag page", job.input_test.id)
+            LOG.info("Job %d's testcase causes a leak of the flag page", job.id)
 
             e = Exploit.create(cs=self._cs, job=self._job, pov_type="type2",
                                method=exploit.method_name, blob=exploit.dump_binary(),
@@ -52,6 +51,3 @@ class ColorGuardWorker(worker.workers.Worker):
 
         else:
             LOG.debug("Unable to find leak or generate exploit for testcase")
-
-        self._job.input_test.colorguard_traced = True
-        self._job.input_test.save()
