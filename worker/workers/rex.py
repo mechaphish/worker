@@ -9,6 +9,7 @@ import pickle
 from farnsworth.models import Test, Exploit, RopCache
 import rex
 import tracer
+from simuvex import SimUnsatError
 
 from . import CRSTracerCacheManager
 import worker.workers
@@ -176,7 +177,7 @@ class RexWorker(worker.workers.Worker):
 
         try:
             self._start()
-        except (rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
+        except (SimUnsatError, rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
             job.input_crash.save()
             LOG.error(e)
         finally:
