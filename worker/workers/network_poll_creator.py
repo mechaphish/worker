@@ -43,7 +43,7 @@ class NetworkPollCreatorWorker(worker.workers.Worker):
             cs = ChallengeSet.get(ChallengeSet.name == cs)
             if cs is not None and xml is not None:
                 RawRoundPoll.create(round=round_traffic.round, cs=cs,
-                                    blob=xml)
+                                    blob=xml, raw_round_traffic=round_traffic)
                 count += 1
             elif cs is None:
                 LOG.error("Unable to find ChallengeSet for id %s, ignoring poll",
