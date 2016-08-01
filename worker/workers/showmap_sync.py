@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals, absolute_import
 
-from farnsworth.models import Crash, Round, Test
+from farnsworth.models import Crash, RawRoundPoll, Test
 import fuzzer
 import rex
 
@@ -20,7 +20,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
     def __init__(self):
         super(ShowmapSyncWorker, self).__init__()
         self._seen = set()
-        self._round = None
+        self._raw_round_traffic = None
         self._cbn_p = None
 
     def _sync_poll_to_test(self, poll):
@@ -48,12 +48,12 @@ class ShowmapSyncWorker(worker.workers.Worker):
         self._seen.add(poll)
 
     def _run(self, job):
-        """Run Showmap on all polls in a round and sync them into Tests if they're new"""
+        """Run Showmap on all polls from a raw round traffic and sync them into Tests if they're new"""
 
-        self._round = self._job.input_round
+        self._raw_round_traffic = self._job.input_rrt
 
-        LOG.debug("Invoking Showmap on polls for challenge %s, round #%d", self._cs.name,
-                  self._job.input_round.num)
+        LOG.debug("Invoking Showmap on polls for challenge %s, raw round traffic #%d", self._cs.name,
+                  self._job.input_rrt.id)
 
         bitmap = "\xff"  # Default bitmap all unseen
         if not self._cs.bitmap.exists():
@@ -67,7 +67,7 @@ class ShowmapSyncWorker(worker.workers.Worker):
         else:
             self._cbn_p = self._cbn.path
 
-        for poll in self._cs.raw_round_polls.join(Round).where(Round.id == self._round.id):
+        for poll in self._cs.raw_round_polls.where(RawRoundPoll.raw_round_traffic == self._raw_round_traffic):
 
             as_test = str(poll.from_xml_to_test())
             if len(as_test) == 0:
