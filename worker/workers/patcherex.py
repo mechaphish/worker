@@ -23,15 +23,19 @@ class PatcherexWorker(worker.workers.Worker):
         pm = PatchMaster(input_file)
         patched_bin, ids_rule = pm.create_one_patch(patch_type)
 
-        name = "{}_patched_{}".format(job.cbn.name, patch_type)
-        ids = IDSRule.get_by_sha256_or_create(rules=ids_rule, cs=job.cbn.cs)
-        pt = PatchType.get(name=patch_type)
-        ChallengeBinaryNode.create(
-            root=job.cbn,
-            cs=job.cbn.cs,
-            name=name,
-            patch_type=pt,
-            blob=patched_bin,
-            sha256=hashlib.sha256(patched_bin).hexdigest(),
-            ids_rule=ids,
-        )
+        if patched_bin == None:
+            LOG.warning("unable to generate patch")
+            return
+        else:
+            name = "{}_patched_{}".format(job.cbn.name, patch_type)
+            ids = IDSRule.get_by_sha256_or_create(rules=ids_rule, cs=job.cbn.cs)
+            pt = PatchType.get(name=patch_type)
+            ChallengeBinaryNode.create(
+                root=job.cbn,
+                cs=job.cbn.cs,
+                name=name,
+                patch_type=pt,
+                blob=patched_bin,
+                sha256=hashlib.sha256(patched_bin).hexdigest(),
+                ids_rule=ids,
+            )
