@@ -6,6 +6,7 @@ from __future__ import unicode_literals, absolute_import
 import logging
 import pickle
 
+from angr import AngrTranslationError
 from farnsworth.models import Test, Exploit, RopCache
 import rex
 import tracer
@@ -177,7 +178,12 @@ class RexWorker(worker.workers.Worker):
 
         try:
             self._start()
-        except (SimUnsatError, rex.NonCrashingInput, rex.CannotExploit, ValueError, tracer.tracer.TracerMisfollowError) as e:
+        except (AngrTranslationError,
+                SimUnsatError,
+                rex.NonCrashingInput,
+                rex.CannotExploit,
+                ValueError,
+                tracer.tracer.TracerMisfollowError) as e:
             job.input_crash.save()
             LOG.error(e)
         finally:
