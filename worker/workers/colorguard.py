@@ -6,7 +6,7 @@ from __future__ import unicode_literals, absolute_import
 import logging
 
 import colorguard
-from farnsworth.models import Exploit
+from farnsworth.models import Test, Exploit
 
 import worker.workers
 LOG = worker.workers.LOG.getChild('colorguard')
@@ -51,3 +51,9 @@ class ColorGuardWorker(worker.workers.Worker):
 
         else:
             LOG.debug("Unable to find leak or generate exploit for testcase")
+
+        if not job.payload['crash']:
+            LOG.debug("Marking test %s as by colorguard traced", job.payload['id'])
+            t = Test.get(id=job.payload['id'])
+            t.colorguard_traced = True
+            t.save()
