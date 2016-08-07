@@ -17,10 +17,10 @@ stages:
 #   script: "lint.py"
 #   tags: ["cgc-linter"]
 
-docs:
-  stage: build
-  script: "generate_docs"
-  tags: ["cgc-linter"]
+# docs:
+#   stage: build
+#   script: "generate_docs"
+#   tags: ["cgc-linter"]
 
 build_images:
   stage: deploy
