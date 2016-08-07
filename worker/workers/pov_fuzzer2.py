@@ -16,7 +16,6 @@ class PovFuzzer2Worker(worker.workers.VMWorker):
 
     def _start(self, job):
         """Runs PovFuzzer on the crashing testcase."""
-        assert not self._cs.is_multi_cbn, "PovFuzzer2 can only be run on single CBs for now"
 
         LOG.info("Pov fuzzer 2 about to try for job %d", job.id)
         LOG.info("Pov fuzzer 2 running ssh command")
