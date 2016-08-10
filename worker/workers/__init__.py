@@ -200,6 +200,7 @@ class VMWorker(Worker):
             LOG.error("Is KVM installed? Popen raised %s", e)
             raise EnvironmentError("Unable to start VM, KVM process failed %s", e)
 
+        stdout, stderr = None, None
         try:
             stdout, stderr = kvm_process.communicate(timeout=self._kvm_timeout)
             LOG.debug("stdout: %s", stdout)
