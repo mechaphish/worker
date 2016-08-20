@@ -15,4 +15,4 @@ setup(name='worker',
       scripts=["bin/worker"],
       install_requires=requires,
       description="Worker component of the Shellphish CRS.",
-      url="https://git.seclab.cs.ucsb.edu/cgc/worker")
+      url="https://github.com/mechaphish/worker")
