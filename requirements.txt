@@ -1,7 +1,6 @@
 colorguard
 farnsworth
 fuzzer
-identifier
 network_poll_creator
 patch_performance
 patcherex
